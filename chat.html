@@ -40,24 +40,49 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         const partnerId = urlParams.get('partner');
+        const partnerName = urlParams.get('name') || "Собеседник";
 
         let myId = null;
+        let myName = "Вы"; 
 
         async function initChat() {
             const { data: { user } } = await _supabase.auth.getUser();
             if (!user) { window.location.href = 'auth.html'; return; }
             myId = user.id;
 
-            document.getElementById('chatTitle').textContent = `Чат с пользователем ${partnerId.substring(0,5)}...`;
+            const { data: myProfile } = await _supabase.from('students').select('name').eq('user_id', myId).single();
+            if (myProfile) { myName = myProfile.name; }
+
+            document.getElementById('chatTitle').textContent = `Чат с: ${partnerName}`;
+            
+            // Отмечаем сообщения как прочитанные и загружаем их
+            await markAsRead();
             loadMessages();
-            setInterval(loadMessages, 3000); // Автообновление
+            
+            // Каждые 3 секунды обновляем сообщения и проверяем, не пришло ли что-то новое, чтобы тоже отметить прочитанным
+            setInterval(async () => {
+                await markAsRead();
+                loadMessages();
+            }, 3000);
+        }
+
+        // ФУНКЦИЯ, КОТОРАЯ СТАТУС "НЕПРОЧИТАНО" МЕНЯЕТ НА "ПРОЧИТАНО"
+        async function markAsRead() {
+            if (!myId || !partnerId) return;
+
+            // Находим все входящие сообщения от этого конкретного партнера, которые еще не прочитаны, и делаем их прочитанными
+            await _supabase
+                .from('messages')
+                .update({ is_read: true })
+                .eq('sender', partnerId)
+                .eq('partner', myId)
+                .eq('is_read', false);
         }
 
         async function loadMessages() {
             const { data } = await _supabase.from('messages').select('*');
             if (!data) return;
 
-            // Фильтруем сообщения строго между нашими ID
             const filtered = data.filter(m => 
                 (m.sender === myId && m.partner === partnerId) || 
                 (m.sender === partnerId && m.partner === myId)
@@ -82,7 +107,16 @@
             if(!text) return;
 
             input.value = '';
-            await _supabase.from('messages').insert([{ sender: myId, partner: partnerId, text: text }]);
+            
+            // Новое сообщение отправляется. Поле is_read автоматически станет false благодаря настройкам Supabase
+            await _supabase.from('messages').insert([{ 
+                sender: myId, 
+                sender_name: myName,
+                partner: partnerId, 
+                partner_name: partnerName,
+                text: text
+            }]);
+            
             loadMessages();
         });
 
