@@ -35,7 +35,7 @@
                     <option value="1 курс">1 курс</option>
                     <option value="2 курс">2 курс</option>
                     <option value="3 курс">3 курс</option>
-                    <option value="4 курс">4 курс</option>
+                    <option value="4 курс">4 iconic курс</option>
                 </select>
             </div>
             <div class="form-group">
@@ -54,23 +54,22 @@
                 <label for="contact">Ник для связи (например: @username)</label>
                 <input type="text" id="contact" placeholder="@my_telegram" required>
             </div>
+            <div class="form-group">
+                <label for="password">Придумайте пароль (чтобы удалить анкету в будущем)</label>
+                <input type="password" id="password" placeholder="Например: 1234" required>
+            </div>
             <button type="submit">Опубликовать в общую базу</button>
         </form>
         <a href="index.html" class="back-link">← Вернуться на главную</a>
     </div>
 
     <script>
-        // Твой URL я уже прописал сам жестко и без ошибок:
         const SUPABASE_URL = "https://oeomhjmeaantcfznojwg.supabase.co"; 
-        // СЮДА ВСТАВЬ СВОЙ КЛЮЧ (внутри кавычек):
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lb21oam1lYWFudGNmem5vandnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDQ3MDYsImV4cCI6MjA5NTk4MDcwNn0.MnOP_d3Qu1CLYzn8l8FW7DMFNH7lP5FILrtiyFzApWA"; 
 
-        // Создаем подключение к Supabase
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Вешаем обработчик на отправку формы
         document.getElementById('profileForm').addEventListener('submit', async function(event) {
-            // ЖЕЛЕЗНО заставляем браузер НЕ обновлять страницу
             event.preventDefault(); 
 
             const newStudent = {
@@ -79,17 +78,16 @@
                 knows: document.getElementById('knows').value,
                 needs: document.getElementById('needs').value,
                 about: document.getElementById('about').value,
-                contact: document.getElementById('contact').value
+                contact: document.getElementById('contact').value,
+                password: document.getElementById('password').value // Сохраняем пароль
             };
 
             try {
-                // Пушим анкету на сервер в таблицу 'students'
                 const { error } = await _supabase.from('students').insert([newStudent]);
 
                 if (error) {
                     alert('База данных Supabase вернула ошибку: ' + error.message);
                 } else {
-                    // Перенаправляем пользователя на страницу со всеми анкетами
                     window.location.href = 'feed.html';
                 }
             } catch (err) {

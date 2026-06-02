@@ -15,8 +15,8 @@
         .search-box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #e2e8f0; }
         .search-box input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
         .cards-grid { display: flex; flex-direction: column; gap: 20px; }
-        .card { background: white; padding: 25px; border-radius: 14px; border: 1px solid #e2e8f0; border-left: 6px solid #4f46e5; display: flex; flex-direction: column; gap: 12px; }
-        .card-header { display: flex; justify-content: space-between; align-items: center; }
+        .card { background: white; padding: 25px; border-radius: 14px; border: 1px solid #e2e8f0; border-left: 6px solid #4f46e5; display: flex; flex-direction: column; gap: 12px; position: relative; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; padding-right: 30px; }
         .card-title { font-size: 1.25rem; font-weight: 700; color: #0f172a; }
         .card-badge { background-color: #e0e7ff; color: #4338ca; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
         .card-text { font-size: 0.95rem; color: #475569; line-height: 1.5; }
@@ -24,7 +24,10 @@
         .tag { font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; font-weight: 500; }
         .tag-know { background-color: #d1fae5; color: #065f46; }
         .tag-learn { background-color: #fee2e2; color: #991b1b; }
-        .card-btn { align-self: flex-end; background-color: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .card-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+        .card-btn { background-color: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-delete { background-color: #ef4444; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .btn-delete:hover { background-color: #dc2626; }
     </style>
 </head>
 <body>
@@ -38,12 +41,9 @@
     </div>
 
     <script>
-        // Твой URL без лишних слэшей
         const SUPABASE_URL = "https://oeomhjmeaantcfznojwg.supabase.co";
-        // ВСТАВЬ СЮДА СВОЙ ДЛИННЫЙ КЛЮЧ АНОНИМНОГО ДОСТУПА
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lb21oam1lYWFudGNmem5vandnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDQ3MDYsImV4cCI6MjA5NTk4MDcwNn0.MnOP_d3Qu1CLYzn8l8FW7DMFNH7lP5FILrtiyFzApWA";
         
-        // Создаем подключение
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const cardsGrid = document.getElementById('cardsGrid');
@@ -52,19 +52,11 @@
 
         async function loadStudents() {
             try {
-                // Загружаем ВСЕ строки из таблицы 'students', сортируя от новых к старым
                 const { data, error } = await _supabase.from('students').select('*').order('id', { ascending: false });
-                
-                if (error) {
-                    alert('Ошибка загрузки данных: ' + error.message);
-                    return;
-                }
-                
+                if (error) { alert('Ошибка загрузки: ' + error.message); return; }
                 allStudents = data;
                 renderCards(allStudents);
-            } catch (err) {
-                alert('Системная ошибка при получении анкет: ' + err.message);
-            }
+            } catch (err) { alert('Системная ошибка: ' + err.message); }
         }
 
         function renderCards(studentsList) {
@@ -78,7 +70,6 @@
                 const card = document.createElement('div');
                 card.className = 'card';
                 
-                // Безопасное разделение тегов (на случай, если поля пустые)
                 const knowsTags = (student.knows || "").split(',').filter(t => t.trim() !== "").map(t => `<span class="tag tag-know">✔ ${t.trim()}</span>`).join('') || '—';
                 const needsTags = (student.needs || "").split(',').filter(t => t.trim() !== "").map(t => `<span class="tag tag-learn">❓ ${t.trim()}</span>`).join('') || '—';
 
@@ -90,10 +81,45 @@
                     <div class="card-text">${student.about || ''}</div>
                     <div><div style="font-size: 0.85rem; font-weight: bold; color: #475569; margin-bottom: 6px;">Умеет:</div><div class="tags">${knowsTags}</div></div>
                     <div style="margin-top: 10px;"><div style="font-size: 0.85rem; font-weight: bold; color: #475569; margin-bottom: 6px;">Ищет:</div><div class="tags">${needsTags}</div></div>
-                    <button class="card-btn" onclick="openChat('${student.name || 'Пользователь'}')">Связаться в чате</button>
+                    
+                    <div class="card-actions">
+                        <button class="btn-delete" onclick="deleteStudent(${student.id}, '${student.password}')">Удалить</button>
+                        <button class="card-btn" onclick="openChat('${student.name || 'Пользователь'}')">Связаться в чате</button>
+                    </div>
                 `;
                 cardsGrid.appendChild(card);
             });
+        }
+
+        // ОБНОВЛЕННАЯ ФУНКЦИЯ БЕЗОПАСНОГО УДАЛЕНИЯ
+        async function deleteStudent(studentId, correctPassword) {
+            // Вызываем окно ввода текста (prompt) вместо обычного подтверждения
+            const userPassword = prompt("Введите секретный пароль для удаления этой анкеты:");
+            
+            // Если пользователь нажал Отмена
+            if (userPassword === null) return; 
+
+            // Проверяем, совпадает ли введенный пароль с паролем из базы данных
+            if (userPassword !== correctPassword) {
+                alert("❌ Ошибка: Неверный пароль! Вы не можете удалить чужую анкету.");
+                return;
+            }
+
+            try {
+                const { error } = await _supabase
+                    .from('students')
+                    .delete()
+                    .eq('id', studentId);
+
+                if (error) {
+                    alert('Не удалось удалить анкету: ' + error.message);
+                } else {
+                    alert('Анкета успешно удалена!');
+                    loadStudents();
+                }
+            } catch (err) {
+                alert('Ошибка при удалении: ' + err.message);
+            }
         }
 
         function openChat(partnerName) {
@@ -108,7 +134,6 @@
             renderCards(filtered);
         });
 
-        // Запуск загрузки при открытии страницы
         loadStudents();
     </script>
 </body>
