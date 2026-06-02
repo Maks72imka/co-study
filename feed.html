@@ -8,57 +8,43 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #f4f6f9; color: #333; padding-bottom: 60px; }
-        
-        /* Обновленная шапка сайта с кнопками */
         nav { background: white; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .logo { font-size: 1.4rem; font-weight: 800; color: #4f46e5; text-decoration: none; }
         .nav-buttons { display: flex; gap: 12px; align-items: center; }
-        
-        .btn-chats { background-color: #f1f5f9; color: #4f46e5; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.9rem; border: 1px solid #e2e8f0; cursor: pointer; }
+        .btn-chats { background-color: #f1f5f9; color: #4f46e5; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; border: 1px solid #e2e8f0; font-size: 0.9rem; }
         .btn-chats:hover { background-color: #e2e8f0; }
         .btn-create { background-color: #10b981; color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.9rem; }
+        .btn-logout { background-color: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
         
         .main-container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
         .search-box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #e2e8f0; }
         .search-box input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
-        
-        /* Карточки */
         .cards-grid { display: flex; flex-direction: column; gap: 20px; }
-        .card { background: white; padding: 25px; border-radius: 14px; border: 1px solid #e2e8f0; border-left: 6px solid #4f46e5; display: flex; flex-direction: column; gap: 12px; position: relative; }
+        .card { background: white; padding: 25px; border-radius: 14px; border: 1px solid #e2e8f0; border-left: 6px solid #4f46e5; display: flex; flex-direction: column; gap: 12px; }
         .card-header { display: flex; justify-content: space-between; align-items: center; }
-        .card-title { font-size: 1.25rem; font-weight: 700; color: #0f172a; }
-        .card-badge { background-color: #e0e7ff; color: #4338ca; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
-        .card-text { font-size: 0.95rem; color: #475569; line-height: 1.5; }
-        .tags { display: flex; flex-wrap: wrap; gap: 6px; }
-        .tag { font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; font-weight: 500; }
-        .tag-know { background-color: #d1fae5; color: #065f46; }
-        .tag-learn { background-color: #fee2e2; color: #991b1b; }
-        .card-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
-        .card-btn { background-color: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-delete { background-color: #ef4444; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .card-title { font-size: 1.25rem; font-weight: 700; }
+        .card-badge { background-color: #e0e7ff; color: #4338ca; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; }
+        .card-text { font-size: 0.95rem; color: #475569; }
+        .card-actions { display: flex; justify-content: flex-end; gap: 10px; }
+        .card-btn { background-color: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-delete { background-color: #ef4444; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        /* СТИЛИ ДЛЯ ОКНА МОИХ ЧАТОВ (МОДАЛЬНОЕ ОКНО) */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; z-index: 1000; display: none; }
-        .modal-window { background: white; width: 90%; max-width: 450px; border-radius: 16px; padding: 25px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); position: relative; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-window { background: white; width: 90%; max-width: 450px; border-radius: 16px; padding: 25px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .modal-title { font-size: 1.3rem; font-weight: 700; color: #0f172a; }
-        .modal-close { background: none; border: none; font-size: 1.5rem; color: #94a3b8; cursor: pointer; }
         .chats-list { display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; }
-        
-        /* Элемент списка чатов */
-        .chat-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: background 0.2s; }
-        .chat-item:hover { background: #e0e7ff; border-color: #cbd5e1; }
-        .chat-item-name { font-weight: 600; color: #1e293b; }
-        .chat-item-go { font-size: 0.85rem; color: #4f46e5; font-weight: bold; }
+        .chat-item { display: flex; justify-content: space-between; padding: 12px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; cursor: pointer; }
+        .chat-item:hover { background: #e0e7ff; }
     </style>
 </head>
 <body>
 
     <nav>
-        <a href="index.html" class="logo">Co-Study</a>
+        <a href="feed.html" class="logo">Co-Study</a>
         <div class="nav-buttons">
             <button class="btn-chats" onclick="openChatsModal()">💬 Мои сообщения</button>
             <a href="create.html" class="btn-create">+ Найти напарника</a>
+            <button class="btn-logout" onclick="logout()">Выйти</button>
         </div>
     </nav>
 
@@ -67,14 +53,10 @@
         <div class="cards-grid" id="cardsGrid"></div>
     </div>
 
-    <div class="modal-overlay" id="modalOverlay" onclick="closeChatsModal(event)">
+    <div class="modal-overlay" id="modalOverlay" onclick="this.style.display='none'">
         <div class="modal-window" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <div class="modal-title">Мои диалоги</div>
-                <button class="modal-close" onclick="closeChatsModal(null)">×</button>
-            </div>
-            <div class="chats-list" id="chatsListContainer">
-                </div>
+            <div class="modal-header"><h3>Мои диалоги</h3></div>
+            <div class="chats-list" id="chatsListContainer"></div>
         </div>
     </div>
 
@@ -94,14 +76,16 @@
             }
             currentUser = user;
             
-            const { data: myProfile } = await _supabase.from('students').select('name').eq('user_id', currentUser.id).single();
+            if (currentUser.user_metadata && currentUser.user_metadata.display_name) {
+                currentUserName = currentUser.user_metadata.display_name;
+            }
+            
+            const { data: myProfile } = await _supabase.from('students').select('name').eq('user_id', currentUser.id).maybeSingle();
             if (myProfile) {
                 currentUserName = myProfile.name;
             }
 
             loadStudents();
-            
-            // Запускаем проверку непрочитанных сообщений сразу и каждые 3 секунды
             checkUnreadMessages();
             setInterval(checkUnreadMessages, 3000);
         }
@@ -145,11 +129,8 @@
             window.location.href = `chat.html?partner=${partnerId}&name=${encodeURIComponent(partnerName)}`;
         }
 
-        // ФУНКЦИЯ ДЛЯ ПОДСЧЕТА НЕПРОЧИТАННЫХ СОБЕСЕДНИКОВ
         async function checkUnreadMessages() {
             if (!currentUser) return;
-
-            // Запрашиваем из базы сообщения, отправленные НАМ, которые еще НЕ прочитаны
             const { data: unreadMessages } = await _supabase
                 .from('messages')
                 .select('sender')
@@ -157,16 +138,10 @@
                 .eq('is_read', false);
 
             const btnChats = document.querySelector('.btn-chats');
-            
             if (unreadMessages && unreadMessages.length > 0) {
-                // Считаем количество УНИКАЛЬНЫХ собеседников, от которых есть новые сообщения
                 const uniqueUnreadSenders = new Set(unreadMessages.map(m => m.sender));
-                const count = uniqueUnreadSenders.size;
-
-                // Добавляем красивую красную цифру на кнопку
-                btnChats.innerHTML = `💬 Мои сообщения <span style="background-color: #ef4444; color: white; border-radius: 50%; padding: 2px 7px; font-size: 0.8rem; margin-left: 5px; font-weight: bold;">${count}</span>`;
+                btnChats.innerHTML = `💬 Мои сообщения <span style="background-color: #ef4444; color: white; border-radius: 50%; padding: 2px 7px; font-size: 0.8rem; margin-left: 5px; font-weight: bold;">${uniqueUnreadSenders.size}</span>`;
             } else {
-                // Если новых сообщений нет, возвращаем обычный текст кнопки
                 btnChats.innerHTML = `💬 Мои сообщения`;
             }
         }
@@ -178,14 +153,12 @@
 
             const { data: messages } = await _supabase.from('messages').select('*');
             const partnersMap = new Map();
-
-            // Также соберем информацию, от кого у нас есть непрочитанные прямо сейчас
             const unreadSenders = new Set();
+
             messages.forEach(m => {
                 if (m.partner === currentUser.id && m.is_read === false) {
                     unreadSenders.add(m.sender);
                 }
-                
                 if (m.sender === currentUser.id) {
                     partnersMap.set(m.partner, m.partner_name || "Пользователь");
                 }
@@ -200,8 +173,6 @@
             partnersMap.forEach((pName, pId) => {
                 const item = document.createElement('div');
                 item.className = 'chat-item';
-                
-                // Если от этого пользователя есть непрочитанные сообщения, выделим его точкой или цветом
                 const badgeHtml = unreadSenders.has(pId) 
                     ? `<span style="background-color: #ef4444; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; font-weight: bold; margin-left: 8px;">NEW</span>` 
                     : '';

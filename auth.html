@@ -18,6 +18,9 @@
         .btn-primary:hover { background-color: #4338ca; }
         .btn-secondary { width: 100%; background-color: transparent; color: #4f46e5; border: 1px solid #4f46e5; padding: 12px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
         .btn-secondary:hover { background-color: #f0fdf4; }
+        
+        /* Скрываем поле имени по умолчанию (для режима Входа) */
+        #nameGroup { display: none; }
     </style>
 </head>
 <body>
@@ -25,6 +28,10 @@
     <div class="auth-container">
         <h2 id="authTitle">Войти в аккаунт</h2>
         <form id="authForm">
+            <div class="form-group" id="nameGroup">
+                <label for="username">Ваше имя / Никнейм</label>
+                <input type="text" id="username" placeholder="Как к вам обращаться?">
+            </div>
             <div class="form-group">
                 <label for="email">Электронная почта</label>
                 <input type="email" id="email" placeholder="example@mail.ru" required>
@@ -47,27 +54,50 @@
 
         function toggleMode() {
             isLoginMode = !isLoginMode;
-            document.getElementById('authTitle').textContent = isLoginMode ? "Войти в аккаунт" : "Регистрация";
-            document.getElementById('mainBtn').textContent = isLoginMode ? "Войти" : "Зарегистрироваться";
-            document.getElementById('toggleBtn').textContent = isLoginMode ? "У меня нет аккаунта (Регистрация)" : "Уже есть аккаунт? Войти";
+            
+            const nameGroup = document.getElementById('nameGroup');
+            const usernameInput = document.getElementById('username');
+            
+            if (isLoginMode) {
+                document.getElementById('authTitle').textContent = "Войти в аккаунт";
+                document.getElementById('mainBtn').textContent = "Войти";
+                document.getElementById('toggleBtn').textContent = "У меня нет аккаунта (Регистрация)";
+                nameGroup.style.display = 'none';
+                usernameInput.removeAttribute('required');
+            } else {
+                document.getElementById('authTitle').textContent = "Регистрация";
+                document.getElementById('mainBtn').textContent = "Зарегистрироваться";
+                document.getElementById('toggleBtn').textContent = "Уже есть аккаунт? Войти";
+                nameGroup.style.display = 'block';
+                usernameInput.setAttribute('required', 'required');
+            }
         }
 
         document.getElementById('authForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
+            const username = document.getElementById('username').value.trim();
 
             try {
                 if (isLoginMode) {
-                    // Авторизация
+                    // Авторизация (вход)
                     const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
                     if (error) throw error;
                     window.location.href = 'feed.html';
                 } else {
-                    // Регистрация
-                    const { data, error } = await _supabase.auth.signUp({ email, password });
+                    // Регистрация с передачей имени в user_metadata
+                    const { data, error } = await _supabase.auth.signUp({ 
+                        email, 
+                        password,
+                        options: {
+                            data: {
+                                display_name: username // Сохраняем имя в метаданные аккаунта
+                            }
+                        }
+                    });
                     if (error) throw error;
-                    alert('Регистрация успешна! Входим...');
+                    alert('Регистрация успешна!');
                     window.location.href = 'feed.html';
                 }
             } catch (err) {

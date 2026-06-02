@@ -46,12 +46,15 @@
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lb21oam1lYWFudGNmem5vandnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDQ3MDYsImV4cCI6MjA5NTk4MDcwNn0.MnOP_d3Qu1CLYzn8l8FW7DMFNH7lP5FILrtiyFzApWA";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Защита: если юзер не вошел, отправляем его авторизоваться
         async function checkUser() {
             const { data: { user } } = await _supabase.auth.getUser();
             if (!user) {
                 alert("Сначала войдите в аккаунт!");
                 window.location.href = 'auth.html';
+                return;
+            }
+            if (user.user_metadata && user.user_metadata.display_name) {
+                document.getElementById('name').value = user.user_metadata.display_name;
             }
         }
         checkUser();
@@ -67,7 +70,7 @@
                 needs: document.getElementById('needs').value,
                 about: document.getElementById('about').value,
                 contact: document.getElementById('contact').value,
-                user_id: user.id // Привязываем к аккаунту автора!
+                user_id: user.id
             };
 
             const { error } = await _supabase.from('students').insert([newStudent]);
