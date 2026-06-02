@@ -8,44 +8,25 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #f1f5f9; display: flex; flex-direction: column; height: 100vh; }
-        
-        /* Шапка чата */
-        header { background: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        header { background: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #e2e8f0; }
         .back-btn { text-decoration: none; color: #64748b; font-size: 1.2rem; font-weight: bold; }
-        .chat-info { flex-grow: 1; }
-        .partner-name { font-size: 1.1rem; font-weight: 700; color: #1e293b; }
-        .user-status { font-size: 0.8rem; color: #10b981; font-weight: 600; }
-
-        /* Окно сообщений */
         .messages-container { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-        .msg { max-width: 70%; padding: 12px 16px; border-radius: 12px; font-size: 0.95rem; line-height: 1.4; position: relative; word-wrap: break-word; }
-        
-        /* Стили для моих и чужих сообщений */
-        .msg.incoming { background-color: white; align-self: flex-start; color: #1e293b; border-bottom-left-radius: 4px; border: 1px solid #e2e8f0; }
-        .msg.outgoing { background-color: #4f46e5; align-self: flex-end; color: white; border-bottom-right-radius: 4px; }
-        
-        .msg-meta { font-size: 0.7rem; margin-top: 5px; text-align: right; display: block; opacity: 0.7; }
-        
-        /* Область ввода сообщения */
-        .input-area { background: white; padding: 15px 20px; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; align-items: center; }
-        .input-area input { flex-grow: 1; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 24px; font-size: 1rem; outline: none; }
-        .input-area input:focus { border-color: #4f46e5; }
-        .input-area button { background-color: #4f46e5; color: white; border: none; padding: 12px 24px; border-radius: 24px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-        .input-area button:hover { background-color: #4338ca; }
+        .msg { max-width: 70%; padding: 12px 16px; border-radius: 12px; font-size: 0.95rem; }
+        .msg.incoming { background-color: white; align-self: flex-start; border: 1px solid #e2e8f0; }
+        .msg.outgoing { background-color: #4f46e5; align-self: flex-end; color: white; }
+        .input-area { background: white; padding: 15px; display: flex; gap: 12px; }
+        .input-area input { flex-grow: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 24px; outline: none; }
+        .input-area button { background-color: #4f46e5; color: white; border: none; padding: 12px 24px; border-radius: 24px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <header>
-        <a href="feed.html" class="back-btn">←</a>
-        <div class="chat-info">
-            <div class="partner-name" id="partnerNameDisplay">Чат</div>
-            <div class="user-status" id="myIdentityDisplay">Вы: загрузка...</div>
-        </div>
+        <a href="feed.html" class="back-btn">← Назад</a>
+        <div><b id="chatTitle">Диалог</b></div>
     </header>
 
-    <div class="messages-container" id="messagesContainer">
-        </div>
+    <div class="messages-container" id="messagesContainer"></div>
 
     <form class="input-area" id="chatForm">
         <input type="text" id="messageInput" placeholder="Напишите сообщение..." required autocomplete="off">
@@ -54,119 +35,58 @@
 
     <script>
         const SUPABASE_URL = "https://oeomhjmeaantcfznojwg.supabase.co";
-        // ВСТАВЬ СЮДА СВОЙ ДЛИННЫЙ КЛЮЧ
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lb21oam1lYWFudGNmem5vandnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDQ3MDYsImV4cCI6MjA5NTk4MDcwNn0.MnOP_d3Qu1CLYzn8l8FW7DMFNH7lP5FILrtiyFzApWA";
-        
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const messagesContainer = document.getElementById('messagesContainer');
-        const partnerNameDisplay = document.getElementById('partnerNameDisplay');
-        const myIdentityDisplay = document.getElementById('myIdentityDisplay');
-        const messageInput = document.getElementById('messageInput');
-
-        // 1. Получаем имя собеседника из ссылки страницы
         const urlParams = new URLSearchParams(window.location.search);
-        const partnerName = urlParams.get('partner') || "Собеседник";
-        partnerNameDisplay.textContent = partnerName;
+        const partnerId = urlParams.get('partner');
 
-        // 2. Определяем, кто КТО Я ТАКОЙ (имя отправителя)
-        let myName = localStorage.getItem('chat_username');
-        if (!myName) {
-            myName = prompt("Введите ваше имя/никнейм для общения в чате:");
-            if (!myName || myName.trim() === "") {
-                myName = "Пользователь_" + Math.floor(Math.random() * 1000);
-            }
-            localStorage.setItem('chat_username', myName.trim());
+        let myId = null;
+
+        async function initChat() {
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (!user) { window.location.href = 'auth.html'; return; }
+            myId = user.id;
+
+            document.getElementById('chatTitle').textContent = `Чат с пользователем ${partnerId.substring(0,5)}...`;
+            loadMessages();
+            setInterval(loadMessages, 3000); // Автообновление
         }
-        myIdentityDisplay.textContent = `Вы: ${myName}`;
 
-        // 3. ФУНКЦИЯ ЗАГРУЗКИ СООБЩЕНИЙ
         async function loadMessages() {
-            try {
-                // Достаем сообщения, которые принадлежат именно нашей паре собеседников
-                const { data, error } = await _supabase
-                    .from('messages')
-                    .select('*');
+            const { data } = await _supabase.from('messages').select('*');
+            if (!data) return;
 
-                if (error) { console.error(error); return; }
+            // Фильтруем сообщения строго между нашими ID
+            const filtered = data.filter(m => 
+                (m.sender === myId && m.partner === partnerId) || 
+                (m.sender === partnerId && m.partner === myId)
+            );
 
-                // Фильтруем сообщения: показываем только диалог между Мной и Партнером в обе стороны
-                const currentChatMessages = data.filter(m => 
-                    (m.sender === myName && m.partner === partnerName) || 
-                    (m.sender === partnerName && m.partner === myName)
-                );
-
-                renderMessages(currentChatMessages);
-            } catch (err) {
-                console.error('Ошибка сети:', err);
-            }
-        }
-
-        // 4. ФУНКЦИЯ ОТРИСОВКИ НА ЭКРАНЕ
-        function renderMessages(list) {
-            messagesContainer.innerHTML = '';
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = '';
             
-            list.forEach(msg => {
+            filtered.forEach(msg => {
                 const msgDiv = document.createElement('div');
-                
-                // Если отправитель сообщения я — красим в синий и прижимаем вправо, если нет — в белый и влево
-                if (msg.sender === myName) {
-                    msgDiv.className = 'msg outgoing';
-                } else {
-                    msgDiv.className = 'msg incoming';
-                }
-
-                msgDiv.innerHTML = `
-                    <div>${msg.text}</div>
-                    <span class="msg-meta">${msg.time || ''}</span>
-                `;
-                messagesContainer.appendChild(msgDiv);
+                msgDiv.className = msg.sender === myId ? 'msg outgoing' : 'msg incoming';
+                msgDiv.innerHTML = `<div>${msg.text}</div>`;
+                container.appendChild(msgDiv);
             });
-
-            // Автоматическая прокрутка вниз к последним сообщениям
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            container.scrollTop = container.scrollHeight;
         }
 
-        // 5. ОТПРАВКА НОВОГО СООБЩЕНИЯ
         document.getElementById('chatForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const text = messageInput.value.trim();
-            if (!text) return;
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if(!text) return;
 
-            // Формируем красивое время ЧЧ:ММ
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            const newMessage = {
-                sender: myName,
-                partner: partnerName,
-                text: text,
-                time: timeStr
-            };
-
-            // Очищаем поле ввода сразу для удобства
-            messageInput.value = '';
-
-            try {
-                // Закидываем в таблицу 'messages' в Supabase
-                const { error } = await _supabase.from('messages').insert([newMessage]);
-                if (error) {
-                    alert('Не удалось отправить: ' + error.message);
-                } else {
-                    // Перезагружаем чат, чтобы увидеть свое сообщение
-                    loadMessages();
-                }
-            } catch (err) {
-                alert('Ошибка отправки: ' + err.message);
-            }
+            input.value = '';
+            await _supabase.from('messages').insert([{ sender: myId, partner: partnerId, text: text }]);
+            loadMessages();
         });
 
-        // Загружаем сообщения сразу при входе
-        loadMessages();
-
-        // Авто-обновление чата каждые 3 секунды, чтобы видеть ответы собеседника в реальном времени!
-        setInterval(loadMessages, 3000);
-
+        initChat();
     </script>
 </body>
 </html>

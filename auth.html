@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход / Регистрация — Co-Study</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #f8fafc; color: #1e293b; display: flex; justify-content: center; align-items: center; height: 100vh; padding: 20px; }
+        .auth-container { max-width: 400px; width: 100%; background: white; padding: 35px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); }
+        h2 { margin-bottom: 25px; font-size: 1.5rem; text-align: center; color: #0f172a; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 7px; font-weight: 600; font-size: 0.9rem; color: #475569; }
+        .form-group input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; }
+        .form-group input:focus { border-color: #4f46e5; }
+        .btn-primary { width: 100%; background-color: #4f46e5; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-bottom: 12px; }
+        .btn-primary:hover { background-color: #4338ca; }
+        .btn-secondary { width: 100%; background-color: transparent; color: #4f46e5; border: 1px solid #4f46e5; padding: 12px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+        .btn-secondary:hover { background-color: #f0fdf4; }
+    </style>
+</head>
+<body>
+
+    <div class="auth-container">
+        <h2 id="authTitle">Войти в аккаунт</h2>
+        <form id="authForm">
+            <div class="form-group">
+                <label for="email">Электронная почта</label>
+                <input type="email" id="email" placeholder="example@mail.ru" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" placeholder="Минимум 6 символов" required>
+            </div>
+            <button type="submit" class="btn-primary" id="mainBtn">Войти</button>
+            <button type="button" class="btn-secondary" id="toggleBtn" onclick="toggleMode()">У меня нет аккаунта (Регистрация)</button>
+        </form>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://oeomhjmeaantcfznojwg.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lb21oam1lYWFudGNmem5vandnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDQ3MDYsImV4cCI6MjA5NTk4MDcwNn0.MnOP_d3Qu1CLYzn8l8FW7DMFNH7lP5FILrtiyFzApWA";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let isLoginMode = true;
+
+        function toggleMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('authTitle').textContent = isLoginMode ? "Войти в аккаунт" : "Регистрация";
+            document.getElementById('mainBtn').textContent = isLoginMode ? "Войти" : "Зарегистрироваться";
+            document.getElementById('toggleBtn').textContent = isLoginMode ? "У меня нет аккаунта (Регистрация)" : "Уже есть аккаунт? Войти";
+        }
+
+        document.getElementById('authForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            try {
+                if (isLoginMode) {
+                    // Авторизация
+                    const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                    window.location.href = 'feed.html';
+                } else {
+                    // Регистрация
+                    const { data, error } = await _supabase.auth.signUp({ email, password });
+                    if (error) throw error;
+                    alert('Регистрация успешна! Входим...');
+                    window.location.href = 'feed.html';
+                }
+            } catch (err) {
+                alert('Ошибка: ' + err.message);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -8,209 +8,147 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #f4f6f9; color: #333; padding-bottom: 60px; }
-        
-        /* Обновленная шапка сайта с кнопками */
         nav { background: white; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .logo { font-size: 1.4rem; font-weight: 800; color: #4f46e5; text-decoration: none; }
         .nav-buttons { display: flex; gap: 12px; align-items: center; }
-        
-        .btn-chats { background-color: #f1f5f9; color: #4f46e5; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.9rem; border: 1px solid #e2e8f0; cursor: pointer; }
-        .btn-chats:hover { background-color: #e2e8f0; }
-        .btn-create { background-color: #10b981; color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.9rem; }
+        .btn-chats { background-color: #f1f5f9; color: #4f46e5; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; border: 1px solid #e2e8f0; }
+        .btn-create { background-color: #10b981; color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; }
+        .btn-logout { background-color: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
         
         .main-container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
         .search-box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #e2e8f0; }
         .search-box input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
-        
-        /* Карточки */
         .cards-grid { display: flex; flex-direction: column; gap: 20px; }
-        .card { background: white; padding: 25px; border-radius: 14px; border: 1px solid #e2e8f0; border-left: 6px solid #4f46e5; display: flex; flex-direction: column; gap: 12px; position: relative; }
+        .card { background: white; padding: 25px; border-radius: 14px; border: 1px solid #e2e8f0; border-left: 6px solid #4f46e5; display: flex; flex-direction: column; gap: 12px; }
         .card-header { display: flex; justify-content: space-between; align-items: center; }
-        .card-title { font-size: 1.25rem; font-weight: 700; color: #0f172a; }
-        .card-badge { background-color: #e0e7ff; color: #4338ca; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
-        .card-text { font-size: 0.95rem; color: #475569; line-height: 1.5; }
+        .card-title { font-size: 1.25rem; font-weight: 700; }
+        .card-badge { background-color: #e0e7ff; color: #4338ca; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; }
+        .card-text { font-size: 0.95rem; color: #475569; }
         .tags { display: flex; flex-wrap: wrap; gap: 6px; }
-        .tag { font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; font-weight: 500; }
+        .tag { font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; }
         .tag-know { background-color: #d1fae5; color: #065f46; }
         .tag-learn { background-color: #fee2e2; color: #991b1b; }
-        .card-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
-        .card-btn { background-color: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-delete { background-color: #ef4444; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .card-actions { display: flex; justify-content: flex-end; gap: 10px; }
+        .card-btn { background-color: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-delete { background-color: #ef4444; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        /* СТИЛИ ДЛЯ ОКНА МОИХ ЧАТОВ (МОДАЛЬНОЕ ОКНО) */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; z-index: 1000; display: none; }
-        .modal-window { background: white; width: 90%; max-width: 450px; border-radius: 16px; padding: 25px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); position: relative; }
+        /* Модальное окно */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-window { background: white; width: 90%; max-width: 450px; border-radius: 16px; padding: 25px; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .modal-title { font-size: 1.3rem; font-weight: 700; color: #0f172a; }
-        .modal-close { background: none; border: none; font-size: 1.5rem; color: #94a3b8; cursor: pointer; }
-        .chats-list { display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; }
-        
-        /* Элемент списка чатов */
-        .chat-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: background 0.2s; }
-        .chat-item:hover { background: #e0e7ff; border-color: #cbd5e1; }
-        .chat-item-name { font-weight: 600; color: #1e293b; }
-        .chat-item-go { font-size: 0.85rem; color: #4f46e5; font-weight: bold; }
+        .chats-list { display: flex; flex-direction: column; gap: 10px; }
+        .chat-item { display: flex; justify-content: space-between; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <nav>
-        <a href="index.html" class="logo">Co-Study</a>
+        <a href="feed.html" class="logo">Co-Study</a>
         <div class="nav-buttons">
             <button class="btn-chats" onclick="openChatsModal()">💬 Мои сообщения</button>
             <a href="create.html" class="btn-create">+ Найти напарника</a>
+            <button class="btn-logout" onclick="logout()">Выйти</button>
         </div>
     </nav>
 
     <div class="main-container">
-        <div class="search-box"><input type="text" id="searchInput" placeholder="🔍 Введите предмет для поиска..."></div>
+        <div class="search-box"><input type="text" id="searchInput" placeholder="🔍 Поиск..."></div>
         <div class="cards-grid" id="cardsGrid"></div>
     </div>
 
-    <div class="modal-overlay" id="modalOverlay" onclick="closeChatsModal(event)">
+    <div class="modal-overlay" id="modalOverlay" onclick="this.style.display='none'">
         <div class="modal-window" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <div class="modal-title">Мои диалоги</div>
-                <button class="modal-close" onclick="closeChatsModal(null)">×</button>
-            </div>
-            <div class="chats-list" id="chatsListContainer">
-                </div>
+            <div class="modal-header"><h3>Мои диалоги</h3></div>
+            <div class="chats-list" id="chatsListContainer"></div>
         </div>
     </div>
 
     <script>
         const SUPABASE_URL = "https://oeomhjmeaantcfznojwg.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lb21oam1lYWFudGNmem5vandnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDQ3MDYsImV4cCI6MjA5NTk4MDcwNn0.MnOP_d3Qu1CLYzn8l8FW7DMFNH7lP5FILrtiyFzApWA";
-        
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const cardsGrid = document.getElementById('cardsGrid');
-        const searchInput = document.getElementById('searchInput');
-        const modalOverlay = document.getElementById('modalOverlay');
-        const chatsListContainer = document.getElementById('chatsListContainer');
-        let allStudents = [];
+        let currentUser = null;
 
-        async function loadStudents() {
-            try {
-                const { data, error } = await _supabase.from('students').select('*').order('id', { ascending: false });
-                if (error) { alert('Ошибка загрузки: ' + error.message); return; }
-                allStudents = data;
-                renderCards(allStudents);
-            } catch (err) { alert('Системная ошибка: ' + err.message); }
-        }
-
-        function renderCards(studentsList) {
-            cardsGrid.innerHTML = '';
-            if (!studentsList || studentsList.length === 0) {
-                cardsGrid.innerHTML = `<p style="text-align:center; color:#64748b; padding:40px;">В базе данных пока нет анкет 😔</p>`;
+        async function init() {
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (!user) {
+                window.location.href = 'auth.html';
                 return;
             }
+            currentUser = user;
+            loadStudents();
+        }
 
-            studentsList.forEach(student => {
+        async function loadStudents() {
+            const { data } = await _supabase.from('students').select('*').order('id', { ascending: false });
+            renderCards(data);
+        }
+
+        function renderCards(list) {
+            const grid = document.getElementById('cardsGrid');
+            grid.innerHTML = '';
+            list.forEach(student => {
                 const card = document.createElement('div');
                 card.className = 'card';
                 
-                const knowsTags = (student.knows || "").split(',').filter(t => t.trim() !== "").map(t => `<span class="tag tag-know">✔ ${t.trim()}</span>`).join('') || '—';
-                const needsTags = (student.needs || "").split(',').filter(t => t.trim() !== "").map(t => `<span class="tag tag-learn">❓ ${t.trim()}</span>`).join('') || '—';
+                // Кнопка удаления видна ТОЛЬКО если карточка создана текущим пользователем
+                const deleteBtnHtml = student.user_id === currentUser.id 
+                    ? `<button class="btn-delete" onclick="deleteStudent(${student.id})">Удалить</button>` 
+                    : '';
 
                 card.innerHTML = `
-                    <div class="card-header">
-                        <div class="card-title">${student.name || 'Аноним'}</div>
-                        <div class="card-badge">${student.course || 'Курс не указан'}</div>
-                    </div>
-                    <div class="card-text">${student.about || ''}</div>
-                    <div><div style="font-size: 0.85rem; font-weight: bold; color: #475569; margin-bottom: 6px;">Умеет:</div><div class="tags">${knowsTags}</div></div>
-                    <div style="margin-top: 10px;"><div style="font-size: 0.85rem; font-weight: bold; color: #475569; margin-bottom: 6px;">Ищет:</div><div class="tags">${needsTags}</div></div>
-                    
+                    <div class="card-header"><div class="card-title">${student.name}</div><div class="card-badge">${student.course}</div></div>
+                    <div class="card-text">${student.about}</div>
                     <div class="card-actions">
-                        <button class="btn-delete" onclick="deleteStudent(${student.id}, '${student.password}')">Удалить</button>
-                        <button class="card-btn" onclick="openChat('${student.name || 'Пользователь'}')">Связаться в чате</button>
+                        ${deleteBtnHtml}
+                        <button class="card-btn" onclick="openChat('${student.user_id}')">Написать</button>
                     </div>
                 `;
-                cardsGrid.appendChild(card);
+                grid.appendChild(card);
             });
         }
 
-        async function deleteStudent(studentId, correctPassword) {
-            const userPassword = prompt("Введите секретный пароль для удаления этой анкеты:");
-            if (userPassword === null) return; 
-            if (userPassword !== correctPassword) {
-                alert("❌ Ошибка: Неверный пароль!");
-                return;
+        async function deleteStudent(id) {
+            if(confirm("Удалить анкету?")) {
+                await _supabase.from('students').delete().eq('id', id);
+                loadStudents();
             }
-            try {
-                const { error } = await _supabase.from('students').delete().eq('id', studentId);
-                if (error) { alert('Не удалось удалить: ' + error.message); } 
-                else { alert('Анкета удалена!'); loadStudents(); }
-            } catch (err) { alert('Ошибка: ' + err.message); }
         }
 
-        function openChat(partnerName) {
-            window.location.href = `chat.html?partner=${encodeURIComponent(partnerName)}`;
+        function openChat(partnerId) {
+            window.location.href = `chat.html?partner=${partnerId}`;
         }
 
-        // --- ЛОГИКА ОКНА УВЕДОМЛЕНИЙ И ДИАЛОГОВ ---
-        
         async function openChatsModal() {
-            // Узнаем, под каким именем текущий пользователь сидит в чатах на этом устройстве
-            const myName = localStorage.getItem('chat_username');
-            chatsListContainer.innerHTML = '';
-            modalOverlay.style.display = 'flex';
+            document.getElementById('modalOverlay').style.display = 'flex';
+            const container = document.getElementById('chatsListContainer');
+            container.innerHTML = '';
 
-            if (!myName) {
-                chatsListContainer.innerHTML = `<p style="color: #64748b; text-align: center; padding: 20px;">Вы еще никому не писали. Откройте любой чат, чтобы зарегистрировать свое имя!</p>`;
-                return;
-            }
+            const { data: messages } = await _supabase.from('messages').select('sender, partner');
+            const partners = new Set();
+            messages.forEach(m => {
+                if (m.sender === currentUser.id) partners.add(m.partner);
+                if (m.partner === currentUser.id) partners.add(m.sender);
+            });
 
-            try {
-                // Достаем вообще все сообщения из базы
-                const { data: messages, error } = await _supabase.from('messages').select('sender, partner');
-                if (error) { console.error(error); return; }
+            if(partners.size === 0) { container.innerHTML = 'Нет чатов'; return; }
 
-                // Ищем имена людей, с которыми у нас есть переписка
-                const activePartners = new Set();
-                messages.forEach(m => {
-                    if (m.sender === myName) activePartners.add(m.partner);
-                    if (m.partner === myName) activePartners.add(m.sender);
-                });
-
-                if (activePartners.size === 0) {
-                    chatsListContainer.innerHTML = `<p style="color: #64748b; text-align: center; padding: 20px;">У вас пока нет активных диалогов 😔</p>`;
-                    return;
-                }
-
-                // Отрисовываем каждый чат в списке
-                activePartners.forEach(partner => {
-                    const item = document.createElement('div');
-                    item.className = 'chat-item';
-                    item.onclick = () => openChat(partner);
-                    item.innerHTML = `
-                        <div class="chat-item-name">👤 ${partner}</div>
-                        <div class="chat-item-go">Открыть чат →</div>
-                    `;
-                    chatsListContainer.appendChild(item);
-                });
-
-            } catch (err) {
-                chatsListContainer.innerHTML = `<p style="color: red; text-align: center;">Ошибка загрузки чатов</p>`;
-            }
+            partners.forEach(pId => {
+                const item = document.createElement('div');
+                item.className = 'chat-item';
+                item.textContent = `Чат с пользователем (ID: ${pId.substring(0,5)}...)`;
+                item.onclick = () => openChat(pId);
+                container.appendChild(item);
+            });
         }
 
-        function closeChatsModal(event) {
-            if (event === null || event.target === modalOverlay) {
-                modalOverlay.style.display = 'none';
-            }
+        async function logout() {
+            await _supabase.auth.signOut();
+            window.location.href = 'auth.html';
         }
 
-        searchInput.addEventListener('input', function(e) {
-            const text = e.target.value.toLowerCase();
-            const filtered = allStudents.filter(s => 
-                `${s.knows} ${s.needs} ${s.name} ${s.about}`.toLowerCase().includes(text)
-            );
-            renderCards(filtered);
-        });
-
-        loadStudents();
+        init();
     </script>
 </body>
 </html>

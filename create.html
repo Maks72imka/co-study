@@ -13,11 +13,8 @@
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 7px; font-weight: 600; font-size: 0.9rem; color: #475569; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #4f46e5; }
-        button { width: 100%; background-color: #10b981; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-        button:hover { background-color: #059669; }
+        button { width: 100%; background-color: #10b981; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
         .back-link { display: block; text-align: center; margin-top: 20px; color: #64748b; text-decoration: none; }
-        .back-link:hover { color: #4f46e5; }
     </style>
 </head>
 <body>
@@ -25,52 +22,43 @@
     <div class="form-container">
         <h2>Заполните анкету напарника</h2>
         <form id="profileForm">
+            <div class="form-group"><label>Ваше имя</label><input type="text" id="name" required></div>
             <div class="form-group">
-                <label for="name">Ваше имя / Никнейм</label>
-                <input type="text" id="name" placeholder="Иван Иванов" required>
-            </div>
-            <div class="form-group">
-                <label for="course">Курс обучения</label>
+                <label>Курс</label>
                 <select id="course">
                     <option value="1 курс">1 курс</option>
                     <option value="2 курс">2 курс</option>
                     <option value="3 курс">3 курс</option>
-                    <option value="4 курс">4 iconic курс</option>
+                    <option value="4 курс">4 курс</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="knows">В чем вы сильны (через запятую)</label>
-                <input type="text" id="knows" placeholder="Матанализ, Python" required>
-            </div>
-            <div class="form-group">
-                <label for="needs">С чем нужна помощь (через запятую)</label>
-                <input type="text" id="needs" placeholder="Сопромат" required>
-            </div>
-            <div class="form-group">
-                <label for="about">О себе / Цель поиска</label>
-                <textarea id="about" rows="4" placeholder="Ищу человека..." required></textarea>
-            </div>
-            <div class="form-group">
-                <label for="contact">Ник для связи (например: @username)</label>
-                <input type="text" id="contact" placeholder="@my_telegram" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Придумайте пароль (чтобы удалить анкету в будущем)</label>
-                <input type="password" id="password" placeholder="Например: 1234" required>
-            </div>
-            <button type="submit">Опубликовать в общую базу</button>
+            <div class="form-group"><label>В чем вы сильны</label><input type="text" id="knows" required></div>
+            <div class="form-group"><label>С чем нужна помощь</label><input type="text" id="needs" required></div>
+            <div class="form-group"><label>О себе</label><textarea id="about" rows="4" required></textarea></div>
+            <div class="form-group"><label>Контакты</label><input type="text" id="contact" placeholder="@telegram" required></div>
+            <button type="submit">Опубликовать</button>
         </form>
-        <a href="index.html" class="back-link">← Вернуться на главную</a>
+        <a href="feed.html" class="back-link">← В ленту</a>
     </div>
 
     <script>
-        const SUPABASE_URL = "https://oeomhjmeaantcfznojwg.supabase.co"; 
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lb21oam1lYWFudGNmem5vandnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDQ3MDYsImV4cCI6MjA5NTk4MDcwNn0.MnOP_d3Qu1CLYzn8l8FW7DMFNH7lP5FILrtiyFzApWA"; 
-
+        const SUPABASE_URL = "https://oeomhjmeaantcfznojwg.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lb21oam1lYWFudGNmem5vandnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDQ3MDYsImV4cCI6MjA5NTk4MDcwNn0.MnOP_d3Qu1CLYzn8l8FW7DMFNH7lP5FILrtiyFzApWA";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Защита: если юзер не вошел, отправляем его авторизоваться
+        async function checkUser() {
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (!user) {
+                alert("Сначала войдите в аккаунт!");
+                window.location.href = 'auth.html';
+            }
+        }
+        checkUser();
 
         document.getElementById('profileForm').addEventListener('submit', async function(event) {
             event.preventDefault(); 
+            const { data: { user } } = await _supabase.auth.getUser();
 
             const newStudent = {
                 name: document.getElementById('name').value,
@@ -79,20 +67,12 @@
                 needs: document.getElementById('needs').value,
                 about: document.getElementById('about').value,
                 contact: document.getElementById('contact').value,
-                password: document.getElementById('password').value // Сохраняем пароль
+                user_id: user.id // Привязываем к аккаунту автора!
             };
 
-            try {
-                const { error } = await _supabase.from('students').insert([newStudent]);
-
-                if (error) {
-                    alert('База данных Supabase вернула ошибку: ' + error.message);
-                } else {
-                    window.location.href = 'feed.html';
-                }
-            } catch (err) {
-                alert('Произошла системная ошибка: ' + err.message);
-            }
+            const { error } = await _supabase.from('students').insert([newStudent]);
+            if (error) alert(error.message);
+            else window.location.href = 'feed.html';
         });
     </script>
 </body>
