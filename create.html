@@ -8,38 +8,68 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #f8fafc; color: #1e293b; padding: 40px 20px; }
-        .form-container { max-width: 600px; margin: 0 auto; background: white; padding: 35px; border-radius: 16px; border: 1px solid #e2e8f0; }
+        .form-container { max-width: 600px; margin: 0 auto; background: white; padding: 35px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); }
         h2 { margin-bottom: 25px; font-size: 1.6rem; color: #0f172a; text-align: center; }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 7px; font-weight: 600; font-size: 0.9rem; color: #475569; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
-        button { width: 100%; background-color: #10b981; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #4f46e5; }
+        button { width: 100%; background-color: #10b981; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        button:hover { background-color: #059669; }
         .back-link { display: block; text-align: center; margin-top: 20px; color: #64748b; text-decoration: none; }
+        .back-link:hover { color: #4f46e5; }
     </style>
 </head>
 <body>
+
     <div class="form-container">
         <h2>Заполните анкету напарника</h2>
         <form id="profileForm">
-            <div class="form-group"><label for="name">Ваше имя / Никнейм</label><input type="text" id="name" placeholder="Иван Иванов" required></div>
-            <div class="form-group"><label for="course">Курс обучения</label><select id="course"><option value="1 курс">1 курс</option><option value="2 курс">2 курс</option><option value="3 курс">3 курс</option><option value="4 курс">4 курс</option></select></div>
-            <div class="form-group"><label for="knows">В чем вы сильны</label><input type="text" id="knows" placeholder="Матанализ, Python" required></div>
-            <div class="form-group"><label for="needs">С чем нужна помощь</label><input type="text" id="needs" placeholder="Сопромат" required></div>
-            <div class="form-group"><label for="about">О себе / Цель поиска</label><textarea id="about" rows="4" placeholder="Ищу человека..." required></textarea></div>
-            <div class="form-group"><label for="contact">Ник для связи</label><input type="text" id="contact" placeholder="@my_telegram" required></div>
+            <div class="form-group">
+                <label for="name">Ваше имя / Никнейм</label>
+                <input type="text" id="name" placeholder="Иван Иванов" required>
+            </div>
+            <div class="form-group">
+                <label for="course">Курс обучения</label>
+                <select id="course">
+                    <option value="1 курс">1 курс</option>
+                    <option value="2 курс">2 курс</option>
+                    <option value="3 курс">3 курс</option>
+                    <option value="4 курс">4 курс</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="knows">В чем вы сильны (через запятую)</label>
+                <input type="text" id="knows" placeholder="Матанализ, Python" required>
+            </div>
+            <div class="form-group">
+                <label for="needs">С чем нужна помощь (через запятую)</label>
+                <input type="text" id="needs" placeholder="Сопромат" required>
+            </div>
+            <div class="form-group">
+                <label for="about">О себе / Цель поиска</label>
+                <textarea id="about" rows="4" placeholder="Ищу человека..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="contact">Ник для связи (например: @username)</label>
+                <input type="text" id="contact" placeholder="@my_telegram" required>
+            </div>
             <button type="submit">Опубликовать в общую базу</button>
         </form>
         <a href="index.html" class="back-link">← Вернуться на главную</a>
     </div>
 
     <script>
-        // !!! ЗАМЕНИ ЭТИ ДАННЫЕ НА СВОИ ИЗ НАСТРОЕК SUPABASE !!!
-        const SUPABASE_URL = "https://oeomhjmeaantcfznojwg.supabase.co/rest/v1/";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lb21oam1lYWFudGNmem5vandnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDQ3MDYsImV4cCI6MjA5NTk4MDcwNn0.MnOP_d3Qu1CLYzn8l8FW7DMFNH7lP5FILrtiyFzApWA";
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // ВСТАВЬ СЮДА СВОИ ДАННЫЕ ВНУТРЬ КАВЫЧЕК:
+        const SUPABASE_URL = "https://oeomhjmeaantcfznojwg.supabase.co/rest/v1/"; 
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lb21oam1lYWFudGNmem5vandnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDQ3MDYsImV4cCI6MjA5NTk4MDcwNn0.MnOP_d3Qu1CLYzn8l8FW7DMFNH7lP5FILrtiyFzApWA"; 
+
+        // Инициализация клиента Supabase
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         document.getElementById('profileForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+            // Эта строчка блокирует стандартную перезагрузку страницы!
+            e.preventDefault(); 
 
             const newStudent = {
                 name: document.getElementById('name').value,
@@ -50,13 +80,18 @@
                 contact: document.getElementById('contact').value
             };
 
-            // Отправляем данные прямо в облачную таблицу PostgreSQL
-            const { error } = await supabase.from('students').insert([newStudent]);
+            try {
+                // Отправляем данные в таблицу 'students'
+                const { error } = await _supabase.from('students').insert([newStudent]);
 
-            if (error) {
-                alert('Ошибка при отправке: ' + error.message);
-            } else {
-                window.location.href = 'feed.html';
+                if (error) {
+                    alert('Ошибка Supabase: ' + error.message);
+                } else {
+                    // Если всё успешно записалось — перенаправляем на ленту
+                    window.location.href = 'feed.html';
+                }
+            } catch (err) {
+                alert('Критическая ошибка в коде: ' + err.message);
             }
         });
     </script>
