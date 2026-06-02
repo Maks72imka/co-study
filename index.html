@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Co-Study — Главная</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #f8fafc; color: #1e293b; line-height: 1.6; }
+        nav { background: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .logo { font-size: 1.6rem; font-weight: 800; color: #4f46e5; text-decoration: none; }
+        .btn-nav { background-color: #4f46e5; color: white; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; }
+        .hero { max-width: 900px; margin: 60px auto; padding: 0 20px; text-align: center; }
+        .hero h1 { font-size: 3rem; color: #0f172a; margin-bottom: 20px; font-weight: 800; }
+        .hero h1 span { color: #3b82f6; }
+        .hero .subtitle { font-size: 1.25rem; color: #64748b; margin-bottom: 40px; }
+        .features { max-width: 1100px; margin: 0 auto 60px auto; padding: 0 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
+        .feature-card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; }
+        .feature-card h3 { font-size: 1.3rem; margin-bottom: 15px; color: #0f172a; }
+        .feature-card p { color: #64748b; font-size: 0.95rem; }
+        .btn-large { display: inline-block; background-color: #10b981; color: white; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html" class="logo">Co-Study</a>
+        <a href="create.html" class="btn-nav">Создать анкету</a>
+    </nav>
+    <div class="hero">
+        <h1>Учиться вместе гораздо <span>эффективнее</span></h1>
+        <p class="subtitle">Co-Study — это глобальная студенческая платформа взаимной выручки с общей базой данных в реальном времени.</p>
+        <div style="text-align: center;"><a href="feed.html" class="btn-large">Посмотреть общую ленту</a></div>
+    </div>
+    <div class="features">
+        <div class="feature-card"><h3>🤝 Общая база данных</h3><p>Все анкеты теперь сохраняются на облачном сервере PostgreSQL и доступны студентам со всех устройств одновременно.</p></div>
+        <div class="feature-card"><h3>⏱️ Онлайн-чат</h3><p>Общайтесь со своими единомышленниками прямо внутри платформы без необходимости переходить в сторонние мессенджеры.</p></div>
+        <div class="feature-card"><h3>🔍 Поиск в реальном времени</h3><p>Умные фильтры помогут мгновенно отсеять нужные дисциплины из общего списка заявок.</p></div>
+    </div>
+</body>
+</html>

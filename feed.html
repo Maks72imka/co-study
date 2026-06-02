@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лента напарников — Co-Study</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #f4f6f9; color: #333; padding-bottom: 60px; }
+        nav { background: white; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .logo { font-size: 1.4rem; font-weight: 800; color: #4f46e5; text-decoration: none; }
+        .btn-create { background-color: #10b981; color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.9rem; }
+        .main-container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+        .search-box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #e2e8f0; }
+        .search-box input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
+        .cards-grid { display: flex; flex-direction: column; gap: 20px; }
+        .card { background: white; padding: 25px; border-radius: 14px; border-left: 6px solid #4f46e5; border: 1px solid #e2e8f0; border-left: 6px solid #4f46e5; display: flex; flex-direction: column; gap: 12px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; }
+        .card-title { font-size: 1.25rem; font-weight: 700; color: #0f172a; }
+        .card-badge { background-color: #e0e7ff; color: #4338ca; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .card-text { font-size: 0.95rem; color: #475569; line-height: 1.5; }
+        .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tag { font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; font-weight: 500; }
+        .tag-know { background-color: #d1fae5; color: #065f46; }
+        .tag-learn { background-color: #fee2e2; color: #991b1b; }
+        .card-btn { align-self: flex-end; background-color: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html" class="logo">← Co-Study</a>
+        <a href="create.html" class="btn-create">+ Найти напарника</a>
+    </nav>
+    <div class="main-container">
+        <div class="search-box"><input type="text" id="searchInput" placeholder="🔍 Введите предмет для поиска..."></div>
+        <div class="cards-grid" id="cardsGrid"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://oeomhjmeaantcfznojwg.supabase.co/rest/v1/";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lb21oam1lYWFudGNmem5vandnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDQ3MDYsImV4cCI6MjA5NTk4MDcwNn0.MnOP_d3Qu1CLYzn8l8FW7DMFNH7lP5FILrtiyFzApWA";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const cardsGrid = document.getElementById('cardsGrid');
+        const searchInput = document.getElementById('searchInput');
+        let allStudents = [];
+
+        async function loadStudents() {
+            // Загружаем ВСЕ строки из облачной таблицы 'students', сортируя от новых к старым
+            const { data, error } = await supabase.from('students').select('*').order('id', { ascending: false });
+            if (error) {
+                console.error(error);
+                return;
+            }
+            allStudents = data;
+            renderCards(allStudents);
+        }
+
+        function renderCards(studentsList) {
+            cardsGrid.innerHTML = '';
+            if (studentsList.length === 0) {
+                cardsGrid.innerHTML = `<p style="text-align:center; color:#64748b; padding:40px;">Никто не найден 😔</p>`;
+                return;
+            }
+
+            studentsList.forEach(student => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                const knowsTags = student.knows.split(',').map(t => `<span class="tag tag-know">✔ ${t.trim()}</span>`).join('');
+                const needsTags = student.needs.split(',').map(t => `<span class="tag tag-learn">❓ ${t.trim()}</span>`).join('');
+
+                card.innerHTML = `
+                    <div class="card-header"><div class="card-title">${student.name}</div><div class="card-badge">${student.course}</div></div>
+                    <div class="card-text">${student.about}</div>
+                    <div><div style="font-size: 0.85rem; font-weight: bold; color: #475569; margin-bottom: 6px;">Умеет:</div><div class="tags">${knowsTags}</div></div>
+                    <div><div style="font-size: 0.85rem; font-weight: bold; color: #475569; margin-bottom: 6px;">Ищет:</div><div class="tags">${needsTags}</div></div>
+                    <button class="card-btn" onclick="openChat('${student.name}')">Связаться в чате</button>
+                `;
+                cardsGrid.appendChild(card);
+            });
+        }
+
+        function openChat(partnerName) {
+            window.location.href = `chat.html?partner=${encodeURIComponent(partnerName)}`;
+        }
+
+        searchInput.addEventListener('input', function(e) {
+            const text = e.target.value.toLowerCase();
+            const filtered = allStudents.filter(s => `${s.knows} ${s.needs} ${s.name}`.toLowerCase().includes(text));
+            renderCards(filtered);
+        });
+
+        loadStudents();
+    </script>
+</body>
+</html>

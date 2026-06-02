@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создать анкету — Co-Study</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #f8fafc; color: #1e293b; padding: 40px 20px; }
+        .form-container { max-width: 600px; margin: 0 auto; background: white; padding: 35px; border-radius: 16px; border: 1px solid #e2e8f0; }
+        h2 { margin-bottom: 25px; font-size: 1.6rem; color: #0f172a; text-align: center; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 7px; font-weight: 600; font-size: 0.9rem; color: #475569; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
+        button { width: 100%; background-color: #10b981; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+        .back-link { display: block; text-align: center; margin-top: 20px; color: #64748b; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Заполните анкету напарника</h2>
+        <form id="profileForm">
+            <div class="form-group"><label for="name">Ваше имя / Никнейм</label><input type="text" id="name" placeholder="Иван Иванов" required></div>
+            <div class="form-group"><label for="course">Курс обучения</label><select id="course"><option value="1 курс">1 курс</option><option value="2 курс">2 курс</option><option value="3 курс">3 курс</option><option value="4 курс">4 курс</option></select></div>
+            <div class="form-group"><label for="knows">В чем вы сильны</label><input type="text" id="knows" placeholder="Матанализ, Python" required></div>
+            <div class="form-group"><label for="needs">С чем нужна помощь</label><input type="text" id="needs" placeholder="Сопромат" required></div>
+            <div class="form-group"><label for="about">О себе / Цель поиска</label><textarea id="about" rows="4" placeholder="Ищу человека..." required></textarea></div>
+            <div class="form-group"><label for="contact">Ник для связи</label><input type="text" id="contact" placeholder="@my_telegram" required></div>
+            <button type="submit">Опубликовать в общую базу</button>
+        </form>
+        <a href="index.html" class="back-link">← Вернуться на главную</a>
+    </div>
+
+    <script>
+        // !!! ЗАМЕНИ ЭТИ ДАННЫЕ НА СВОИ ИЗ НАСТРОЕК SUPABASE !!!
+        const SUPABASE_URL = "https://oeomhjmeaantcfznojwg.supabase.co/rest/v1/";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lb21oam1lYWFudGNmem5vandnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDQ3MDYsImV4cCI6MjA5NTk4MDcwNn0.MnOP_d3Qu1CLYzn8l8FW7DMFNH7lP5FILrtiyFzApWA";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        document.getElementById('profileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const newStudent = {
+                name: document.getElementById('name').value,
+                course: document.getElementById('course').value,
+                knows: document.getElementById('knows').value,
+                needs: document.getElementById('needs').value,
+                about: document.getElementById('about').value,
+                contact: document.getElementById('contact').value
+            };
+
+            // Отправляем данные прямо в облачную таблицу PostgreSQL
+            const { error } = await supabase.from('students').insert([newStudent]);
+
+            if (error) {
+                alert('Ошибка при отправке: ' + error.message);
+            } else {
+                window.location.href = 'feed.html';
+            }
+        });
+    </script>
+</body>
+</html>

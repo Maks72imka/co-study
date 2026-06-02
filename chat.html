@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный чат — Co-Study</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #f1f5f9; color: #1e293b; display: flex; flex-direction: column; height: 100vh; }
+        .chat-header { background: white; padding: 15px 25px; display: flex; align-items: center; border-bottom: 1px solid #e2e8f0; }
+        .back-btn { text-decoration: none; color: #4f46e5; font-weight: bold; margin-right: 20px; }
+        .partner-name { font-weight: 700; font-size: 1.1rem; }
+        .messages-container { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background-color: #f8fafc; }
+        .message { max-width: 70%; padding: 12px 16px; border-radius: 12px; font-size: 0.95rem; position: relative; word-wrap: break-word; }
+        .message.my { background-color: #4f46e5; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .message.other { background-color: white; color: #1e293b; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #e2e8f0; }
+        .message-time { font-size: 0.7rem; opacity: 0.7; text-align: right; margin-top: 5px; }
+        .input-panel { background: white; padding: 15px 20px; display: flex; gap: 10px; border-top: 1px solid #e2e8f0; }
+        .input-panel input { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; }
+        .send-btn { background-color: #4f46e5; color: white; border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="chat-header">
+        <a href="feed.html" class="back-btn">← Назад</a>
+        <div><span class="partner-name" id="partnerNameDisplay">Напарник</span></div>
+    </div>
+    <div class="messages-container" id="messagesContainer"></div>
+    <form class="input-panel" id="messageForm">
+        <input type="text" id="messageInput" placeholder="Напишите сообщение..." required autocomplete="off">
+        <button type="submit" class="send-btn">Отправить</button>
+    </form>
+
+    <script>
+        const SUPABASE_URL = "https://oeomhjmeaantcfznojwg.supabase.co/rest/v1/";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lb21oam1lYWFudGNmem5vandnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDQ3MDYsImV4cCI6MjA5NTk4MDcwNn0.MnOP_d3Qu1CLYzn8l8FW7DMFNH7lP5FILrtiyFzApWA";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const partnerName = urlParams.get('partner') || 'Пользователь';
+        document.getElementById('partnerNameDisplay').textContent = partnerName;
+
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageForm = document.getElementById('messageForm');
+        const messageInput = document.getElementById('messageInput');
+
+        async function loadMessages() {
+            // Тянем сообщения с сервера, относящиеся конкретно к этому диалогу
+            const { data, error } = await supabase.from('messages').select('*').eq('partner', partnerName).order('id', { ascending: true });
+            if (error) return;
+
+            messagesContainer.innerHTML = '';
+            data.forEach(msg => {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `message ${msg.sender}`;
+                msgDiv.innerHTML = `<div>${msg.text}</div><div class="message-time">${msg.time}</div>`;
+                messagesContainer.appendChild(msgDiv);
+            });
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        messageForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const text = messageInput.value.trim();
+            if (!text) return;
+
+            const timeString = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const newMsg = { partner: partnerName, sender: 'my', text: text, time: timeString };
+
+            // Пушим сообщение в облако
+            await supabase.from('messages').insert([newMsg]);
+            messageInput.value = '';
+            loadMessages();
+        });
+
+        // Каждые 2 секунды опрашиваем сервер на наличие новых сообщений (простой веб-сокинг)
+        setInterval(loadMessages, 2000);
+        loadMessages();
+    </script>
+</body>
+</html>
