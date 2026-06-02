@@ -8,15 +8,24 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #f4f6f9; color: #333; padding-bottom: 60px; }
+        
+        /* Обновленная шапка сайта с кнопками */
         nav { background: white; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .logo { font-size: 1.4rem; font-weight: 800; color: #4f46e5; text-decoration: none; }
+        .nav-buttons { display: flex; gap: 12px; align-items: center; }
+        
+        .btn-chats { background-color: #f1f5f9; color: #4f46e5; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.9rem; border: 1px solid #e2e8f0; cursor: pointer; }
+        .btn-chats:hover { background-color: #e2e8f0; }
         .btn-create { background-color: #10b981; color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.9rem; }
+        
         .main-container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
         .search-box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #e2e8f0; }
         .search-box input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
+        
+        /* Карточки */
         .cards-grid { display: flex; flex-direction: column; gap: 20px; }
         .card { background: white; padding: 25px; border-radius: 14px; border: 1px solid #e2e8f0; border-left: 6px solid #4f46e5; display: flex; flex-direction: column; gap: 12px; position: relative; }
-        .card-header { display: flex; justify-content: space-between; align-items: center; padding-right: 30px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; }
         .card-title { font-size: 1.25rem; font-weight: 700; color: #0f172a; }
         .card-badge { background-color: #e0e7ff; color: #4338ca; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
         .card-text { font-size: 0.95rem; color: #475569; line-height: 1.5; }
@@ -26,18 +35,47 @@
         .tag-learn { background-color: #fee2e2; color: #991b1b; }
         .card-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
         .card-btn { background-color: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-delete { background-color: #ef4444; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-        .btn-delete:hover { background-color: #dc2626; }
+        .btn-delete { background-color: #ef4444; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+        /* СТИЛИ ДЛЯ ОКНА МОИХ ЧАТОВ (МОДАЛЬНОЕ ОКНО) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; z-index: 1000; display: none; }
+        .modal-window { background: white; width: 90%; max-width: 450px; border-radius: 16px; padding: 25px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); position: relative; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { font-size: 1.3rem; font-weight: 700; color: #0f172a; }
+        .modal-close { background: none; border: none; font-size: 1.5rem; color: #94a3b8; cursor: pointer; }
+        .chats-list { display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; }
+        
+        /* Элемент списка чатов */
+        .chat-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: background 0.2s; }
+        .chat-item:hover { background: #e0e7ff; border-color: #cbd5e1; }
+        .chat-item-name { font-weight: 600; color: #1e293b; }
+        .chat-item-go { font-size: 0.85rem; color: #4f46e5; font-weight: bold; }
     </style>
 </head>
 <body>
+
     <nav>
-        <a href="index.html" class="logo">← Co-Study</a>
-        <a href="create.html" class="btn-create">+ Найти напарника</a>
+        <a href="index.html" class="logo">Co-Study</a>
+        <div class="nav-buttons">
+            <button class="btn-chats" onclick="openChatsModal()">💬 Мои сообщения</button>
+            <a href="create.html" class="btn-create">+ Найти напарника</a>
+        </div>
     </nav>
+
     <div class="main-container">
         <div class="search-box"><input type="text" id="searchInput" placeholder="🔍 Введите предмет для поиска..."></div>
         <div class="cards-grid" id="cardsGrid"></div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay" onclick="closeChatsModal(event)">
+        <div class="modal-window" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">Мои диалоги</div>
+                <button class="modal-close" onclick="closeChatsModal(null)">×</button>
+            </div>
+            <div class="chats-list" id="chatsListContainer">
+                </div>
+        </div>
     </div>
 
     <script>
@@ -48,6 +86,8 @@
 
         const cardsGrid = document.getElementById('cardsGrid');
         const searchInput = document.getElementById('searchInput');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const chatsListContainer = document.getElementById('chatsListContainer');
         let allStudents = [];
 
         async function loadStudents() {
@@ -91,39 +131,75 @@
             });
         }
 
-        // ОБНОВЛЕННАЯ ФУНКЦИЯ БЕЗОПАСНОГО УДАЛЕНИЯ
         async function deleteStudent(studentId, correctPassword) {
-            // Вызываем окно ввода текста (prompt) вместо обычного подтверждения
             const userPassword = prompt("Введите секретный пароль для удаления этой анкеты:");
-            
-            // Если пользователь нажал Отмена
             if (userPassword === null) return; 
-
-            // Проверяем, совпадает ли введенный пароль с паролем из базы данных
             if (userPassword !== correctPassword) {
-                alert("❌ Ошибка: Неверный пароль! Вы не можете удалить чужую анкету.");
+                alert("❌ Ошибка: Неверный пароль!");
                 return;
             }
-
             try {
-                const { error } = await _supabase
-                    .from('students')
-                    .delete()
-                    .eq('id', studentId);
-
-                if (error) {
-                    alert('Не удалось удалить анкету: ' + error.message);
-                } else {
-                    alert('Анкета успешно удалена!');
-                    loadStudents();
-                }
-            } catch (err) {
-                alert('Ошибка при удалении: ' + err.message);
-            }
+                const { error } = await _supabase.from('students').delete().eq('id', studentId);
+                if (error) { alert('Не удалось удалить: ' + error.message); } 
+                else { alert('Анкета удалена!'); loadStudents(); }
+            } catch (err) { alert('Ошибка: ' + err.message); }
         }
 
         function openChat(partnerName) {
             window.location.href = `chat.html?partner=${encodeURIComponent(partnerName)}`;
+        }
+
+        // --- ЛОГИКА ОКНА УВЕДОМЛЕНИЙ И ДИАЛОГОВ ---
+        
+        async function openChatsModal() {
+            // Узнаем, под каким именем текущий пользователь сидит в чатах на этом устройстве
+            const myName = localStorage.getItem('chat_username');
+            chatsListContainer.innerHTML = '';
+            modalOverlay.style.display = 'flex';
+
+            if (!myName) {
+                chatsListContainer.innerHTML = `<p style="color: #64748b; text-align: center; padding: 20px;">Вы еще никому не писали. Откройте любой чат, чтобы зарегистрировать свое имя!</p>`;
+                return;
+            }
+
+            try {
+                // Достаем вообще все сообщения из базы
+                const { data: messages, error } = await _supabase.from('messages').select('sender, partner');
+                if (error) { console.error(error); return; }
+
+                // Ищем имена людей, с которыми у нас есть переписка
+                const activePartners = new Set();
+                messages.forEach(m => {
+                    if (m.sender === myName) activePartners.add(m.partner);
+                    if (m.partner === myName) activePartners.add(m.sender);
+                });
+
+                if (activePartners.size === 0) {
+                    chatsListContainer.innerHTML = `<p style="color: #64748b; text-align: center; padding: 20px;">У вас пока нет активных диалогов 😔</p>`;
+                    return;
+                }
+
+                // Отрисовываем каждый чат в списке
+                activePartners.forEach(partner => {
+                    const item = document.createElement('div');
+                    item.className = 'chat-item';
+                    item.onclick = () => openChat(partner);
+                    item.innerHTML = `
+                        <div class="chat-item-name">👤 ${partner}</div>
+                        <div class="chat-item-go">Открыть чат →</div>
+                    `;
+                    chatsListContainer.appendChild(item);
+                });
+
+            } catch (err) {
+                chatsListContainer.innerHTML = `<p style="color: red; text-align: center;">Ошибка загрузки чатов</p>`;
+            }
+        }
+
+        function closeChatsModal(event) {
+            if (event === null || event.target === modalOverlay) {
+                modalOverlay.style.display = 'none';
+            }
         }
 
         searchInput.addEventListener('input', function(e) {
