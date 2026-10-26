@@ -53,7 +53,16 @@
                 window.location.href = 'auth.html';
                 return;
             }
-            if (user.user_metadata && user.user_metadata.display_name) {
+            const { data: profile } = await _supabase.from('students').select('*').eq('user_id', user.id).maybeSingle();
+            
+            if (profile && profile.knows !== "-") {
+                document.getElementById('name').value = profile.name || "";
+                document.getElementById('course').value = profile.course || "1 курс";
+                document.getElementById('knows').value = profile.knows || "";
+                document.getElementById('needs').value = profile.needs || "";
+                document.getElementById('about').value = profile.about || "";
+                document.getElementById('contact').value = profile.contact || "";
+            } else if (user.user_metadata && user.user_metadata.display_name) {
                 document.getElementById('name').value = user.user_metadata.display_name;
             }
         }
@@ -63,18 +72,19 @@
             event.preventDefault(); 
             const { data: { user } } = await _supabase.auth.getUser();
 
-            const newStudent = {
+            const studentData = {
+                user_id: user.id,
                 name: document.getElementById('name').value,
                 course: document.getElementById('course').value,
                 knows: document.getElementById('knows').value,
+                needs: document.encodeURIComponent ? document.getElementById('needs').value : document.getElementById('needs').value,
                 needs: document.getElementById('needs').value,
                 about: document.getElementById('about').value,
-                contact: document.getElementById('contact').value,
-                user_id: user.id
+                contact: document.getElementById('contact').value
             };
 
-            const { error } = await _supabase.from('students').insert([newStudent]);
-            if (error) alert(error.message);
+            const { error } = await _supabase.from('students').upsert([studentData], { onConflict: 'user_id' });
+            if (error) alert("Ошибка сохранения: " + error.message);
             else window.location.href = 'feed.html';
         });
     </script>
