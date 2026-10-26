@@ -11,7 +11,7 @@
         header { background: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #e2e8f0; z-index: 10; }
         .back-btn { text-decoration: none; color: #64748b; font-size: 1.2rem; font-weight: bold; }
         
-        /* Контейнер чата с относительным позиционированием для плавающей даты */
+        /* Контейнер чата */
         .chat-wrapper { position: relative; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
 
         /* ПЛАВАЮЩИЙ БЛОК ДАТЫ (по центру сверху) */
@@ -20,18 +20,18 @@
             top: 12px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: rgba(15, 23, 42, 0.6);
+            background-color: rgba(15, 23, 42, 0.75);
             color: white;
-            padding: 5px 12px;
+            padding: 5px 14px;
             border-radius: 12px;
             font-size: 0.75rem;
             font-weight: 600;
             backdrop-filter: blur(4px);
             z-index: 5;
             pointer-events: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            transition: opacity 0.2s ease;
-            opacity: 0; /* Изначально скрыто, пока не пойдет скролл */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            transition: opacity 0.3s ease;
+            opacity: 0;
         }
 
         .messages-container { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
@@ -41,10 +41,10 @@
         .msg.incoming { background-color: white; align-self: flex-start; border: 1px solid #e2e8f0; color: #1e293b; }
         .msg.outgoing { background-color: #4f46e5; align-self: flex-end; color: white; }
         
-        /* Под сообщением теперь ТОЛЬКО время */
+        /* Под сообщением только время */
         .msg-time { font-size: 0.7rem; position: absolute; bottom: 4px; right: 10px; }
         .msg.incoming .msg-time { color: #94a3b8; }
-        .msg.outgoing .msg-time { color: rgba(255, 255, 255, 0.7); }
+        .msg.outgoing .msg-time { color: rgba(255, 255, 255, 0.75); }
 
         .input-area { background: white; padding: 15px; display: flex; gap: 12px; border-top: 1px solid #e2e8f0; z-index: 10; }
         .input-area input { flex-grow: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 24px; outline: none; font-size: 1rem; }
@@ -59,9 +59,7 @@
     </header>
 
     <div class="chat-wrapper">
-        <!-- Плавающая плашка даты -->
         <div class="floating-date-badge" id="floatingDateBadge">Сегодня</div>
-        
         <div class="messages-container" id="messagesContainer"></div>
     </div>
 
@@ -81,114 +79,205 @@
 
         let myId = null;
         let myName = "Вы"; 
-        let cachedMessages = []; // Сохраним сообщения для определения даты при скролле
 
         async function initChat() {
-            const { data: { user } } = await _supabase.auth.getUser();
-            if (!user) { window.location.href = 'auth.html'; return; }
-            myId = user.id;
+            try {
+                const { data: { user } } = await _supabase.auth.getUser();
+                if (!user) { window.location.href = 'auth.html'; return; }
+                myId = user.id;
 
-            if (user.user_metadata && user.user_metadata.display_name) {
-                myName = user.user_metadata.display_name;
-            }
+                if (user.user_metadata && user.user_metadata.display_name) {
+                    myName = user.user_metadata.display_name;
+                }
 
-            const { data: myProfile } = await _supabase.from('students').select('name').eq('user_id', myId).maybeSingle();
-            if (myProfile) { myName = myProfile.name; }
+                const { data: myProfile } = await _supabase.from('students').select('name').eq('user_id', myId).maybeSingle();
+                if (myProfile && myProfile.name) { myName = myProfile.name; }
 
-            document.getElementById('chatTitle').textContent = `Чат с: ${partnerName}`;
-            
-            await markAsRead();
-            await loadMessages(true); // true означает прокрутку вниз при первом открытии
-            
-            setInterval(async () => {
+                document.getElementById('chatTitle').textContent = `Чат с: ${partnerName}`;
+                
                 await markAsRead();
-                await loadMessages(false);
-            }, 3000);
-        }
-
-        // Функция проверки: сегодня, вчера или точная дата (с учетом года)
-        function getSmartDateString(isoString) {
-            if (!isoString) return "";
-            const msgDate = new Date(isoString);
-            const today = new Date();
-            
-            const isToday = msgDate.toDateString() === today.toDateString();
-            
-            const yesterday = new Date();
-            yesterday.setDate(today.getDate() - 1);
-            const isYesterday = msgDate.toDateString() === yesterday.toDateString();
-
-            if (isToday) return "Сегодня";
-            if (isYesterday) return "Вчера";
-
-            // Месяцы прописью для красивого вывода
-            const months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
-            const day = msgDate.getDate();
-            const monthName = months[msgDate.getMonth()];
-            const year = msgDate.getFullYear();
-            const currentYear = today.getFullYear();
-
-            // Если год не текущий, добавляем двухзначный год (например, "24 октября 25 г.")
-            if (year !== currentYear) {
-                const shortYear = String(year).slice(-2);
-                return `${day} ${monthName} ${shortYear} г.`;
+                await loadMessages(true);
+                
+                setInterval(async () => {
+                    await markAsRead();
+                    await loadMessages(false);
+                }, 3000);
+            } catch (err) {
+                console.error("Ошибка инициализации чата:", err);
             }
-
-            return `${day} ${monthName}`;
         }
 
-        // Функция для получения только времени (например, "17:03")
+        // Безопасное определение даты
+        function getSmartDateString(isoString) {
+            if (!isoString) return "Сегодня";
+            try {
+                const msgDate = new Date(isoString);
+                if (isNaN(msgDate.getTime())) return "Сегодня";
+
+                const today = new Date();
+                const isToday = msgDate.toDateString() === today.toDateString();
+                
+                const yesterday = new Date();
+                yesterday.setDate(today.getDate() - 1);
+                const isYesterday = msgDate.toDateString() === yesterday.toDateString();
+
+                if (isToday) return "Сегодня";
+                if (isYesterday) return "Вчера";
+
+                const months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+                const day = msgDate.getDate();
+                const monthName = months[msgDate.getMonth()];
+                const year = msgDate.getFullYear();
+                const currentYear = today.getFullYear();
+
+                if (year !== currentYear) {
+                    const shortYear = String(year).slice(-2);
+                    return `${day} ${monthName} ${shortYear} г.`;
+                }
+
+                return `${day} ${monthName}`;
+            } catch (e) {
+                return "Сегодня";
+            }
+        }
+
+        // Безопасное получение времени
         function getMessageTime(isoString) {
-            if (!isoString) return "";
-            const date = new Date(isoString);
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            return `${hours}:${minutes}`;
+            if (!isoString) {
+                const now = new Date();
+                return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            }
+            try {
+                const date = new Date(isoString);
+                if (isNaN(date.getTime())) return "";
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${hours}:${minutes}`;
+            } catch (e) {
+                return "";
+            }
         }
 
         async function markAsRead() {
             if (!myId || !partnerId) return;
-            await _supabase
-                .from('messages')
-                .update({ is_read: true })
-                .eq('sender', partnerId)
-                .eq('partner', myId)
-                .eq('is_read', false);
+            try {
+                await _supabase
+                    .from('messages')
+                    .update({ is_read: true })
+                    .eq('sender', partnerId)
+                    .eq('partner', myId)
+                    .eq('is_read', false);
+            } catch (e) {
+                console.error(" Ошибка обновления статуса прочтения:", e);
+            }
         }
 
         async function loadMessages(scrollToBottomFlag = false) {
-            const { data } = await _supabase.from('messages').select('*');
-            if (!data) return;
+            try {
+                const { data, error } = await _supabase.from('messages').select('*').order('id', { ascending: true });
+                if (error || !data) return;
 
-            cachedMessages = data.filter(m => 
-                (m.sender === myId && m.partner === partnerId) || 
-                (m.sender === partnerId && m.partner === myId)
-            );
+                const filtered = data.filter(m => 
+                    (m.sender === myId && m.partner === partnerId) || 
+                    (m.sender === partnerId && m.partner === myId)
+                );
 
-            const container = document.getElementById('messagesContainer');
-            container.innerHTML = '';
-            
-            cachedMessages.forEach((msg, index) => {
-                const msgDiv = document.createElement('div');
-                msgDiv.className = msg.sender === myId ? 'msg outgoing' : 'msg incoming';
+                const container = document.getElementById('messagesContainer');
+                container.innerHTML = '';
                 
-                // Сохраняем дату в атрибут для определения при скролле
-                msgDiv.setAttribute('data-date-string', getSmartDateString(msg.created_at));
+                filtered.forEach(msg => {
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = msg.sender === myId ? 'msg outgoing' : 'msg incoming';
+                    
+                    const dateAttr = getSmartDateString(msg.created_at);
+                    msgDiv.setAttribute('data-date-string', dateAttr);
 
-                const timeStr = getMessageTime(msg.created_at);
+                    const timeStr = getMessageTime(msg.created_at);
 
-                msgDiv.innerHTML = `
-                    <div>${msg.text}</div>
-                    <div class="msg-time">${timeStr}</div>
-                `;
-                container.appendChild(msgDiv);
-            });
+                    msgDiv.innerHTML = `
+                        <div>${msg.text}</div>
+                        <div class="msg-time">${timeStr}</div>
+                    `;
+                    container.appendChild(msgDiv);
+                });
 
-            if (scrollToBottomFlag) {
-                container.scrollTop = container.scrollHeight;
+                if (scrollToBottomFlag) {
+                    container.scrollTop = container.scrollHeight;
+                }
+                updateFloatingDate();
+            } catch (err) {
+                console.error("Ошибка загрузки сообщений:", err);
             }
-            updateFloatingDate();
         }
 
-        // Логика определения, какую дату показывать при скролле
-        const messagesContainer = document.getElementById('
+        // Логика плавающей даты
+        const messagesContainer = document.getElementById('messagesContainer');
+        const floatingBadge = document.getElementById('floatingDateBadge');
+        let scrollTimeout;
+
+        messagesContainer.addEventListener('scroll', () => {
+            updateFloatingDate();
+            floatingBadge.style.opacity = '1';
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                floatingBadge.style.opacity = '0';
+            }, 1500);
+        });
+
+        function updateFloatingDate() {
+            const msgElements = messagesContainer.querySelectorAll('.msg');
+            if (msgElements.length === 0) return;
+
+            const containerRect = messagesContainer.getBoundingClientRect();
+            const containerCenter = containerRect.top + containerRect.height / 2;
+
+            let closestMsg = msgElements[0];
+            let minDistance = Infinity;
+
+            msgElements.forEach(msg => {
+                const rect = msg.getBoundingClientRect();
+                const msgCenter = rect.top + rect.height / 2;
+                const distance = Math.abs(containerCenter - msgCenter);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestMsg = msg;
+                }
+            });
+
+            const dateStr = closestMsg.getAttribute('data-date-string');
+            if (dateStr) {
+                floatingBadge.textContent = dateStr;
+            }
+        }
+
+        document.getElementById('chatForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if(!text) return;
+
+            input.value = '';
+            
+            try {
+                const { error } = await _supabase.from('messages').insert([{ 
+                    sender: myId, 
+                    sender_name: myName,
+                    partner: partnerId, 
+                    partner_name: partnerName,
+                    text: text
+                }]);
+                
+                if (error) {
+                    alert("Не удалось отправить сообщение: " + error.message);
+                } else {
+                    await loadMessages(true);
+                }
+            } catch (err) {
+                alert("Ошибка отправки: " + err.message);
+            }
+        });
+
+        initChat();
+    </script>
+</body>
+</html>
