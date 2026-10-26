@@ -20,10 +20,15 @@
         .search-box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #e2e8f0; }
         .search-box input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
         .cards-grid { display: flex; flex-direction: column; gap: 20px; }
-        .card { background: white; padding: 25px; border-radius: 14px; border: 1px solid #e2e8f0; border-left: 6px solid #4f46e5; display: flex; flex-direction: column; gap: 12px; }
+        .card { background: white; padding: 25px; border-radius: 14px; border: 1px solid #e2e8f0; border-left: 6px solid #4f46e5; display: flex; flex-direction: column; gap: 12px; position: relative; }
         .card-header { display: flex; justify-content: space-between; align-items: center; }
         .card-title { font-size: 1.25rem; font-weight: 700; }
+        .card-badge-container { display: flex; align-items: center; gap: 10px; }
         .card-badge { background-color: #e0e7ff; color: #4338ca; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; }
+        
+        /* Стиль для времени создания анкеты */
+        .card-time { font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
+
         .card-text { font-size: 0.95rem; color: #475569; }
         .card-actions { display: flex; justify-content: flex-end; gap: 10px; }
         .card-btn { background-color: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
@@ -91,13 +96,37 @@
         }
 
         async function loadStudents() {
-            const { data } = await _supabase.from('students').select('*').order('id', { ascending: false });
+            const { data } = await _supabase.from('students').select('*').neq('knows', '-').order('id', { ascending: false });
             renderCards(data);
+        }
+
+        // Функция форматирования времени под твои требования
+        function formatCardDate(isoString) {
+            if (!isoString) return "";
+            const date = new Date(isoString);
+            const currentYear = new Date().getFullYear(); // 2026
+
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+
+            // Если год не текущий (например, 2025), выводим в формате ДД.ММ.ГГ ЧЧ:ММ
+            if (year !== currentYear) {
+                const shortYear = String(year).slice(-2); // Берем последние 2 цифры (например, "25")
+                return `${day}.${month}.${shortYear} в ${hours}:${minutes}`;
+            } else {
+                // Если текущий год (2026), год не показываем
+                return `${day}.${month} в ${hours}:${minutes}`;
+            }
         }
 
         function renderCards(list) {
             const grid = document.getElementById('cardsGrid');
             grid.innerHTML = '';
+            if(!list || list.length === 0) { grid.innerHTML = '<div style="text-align:center;color:#64748b;">Пока никто не опубликовал анкеты. Будьте первыми!</div>'; return; }
+            
             list.forEach(student => {
                 const card = document.createElement('div');
                 card.className = 'card';
@@ -106,9 +135,21 @@
                     ? `<button class="btn-delete" onclick="deleteStudent(${student.id})">Удалить</button>` 
                     : '';
 
+                const formattedDate = formatCardDate(student.created_at);
+
                 card.innerHTML = `
-                    <div class="card-header"><div class="card-title">${student.name}</div><div class="card-badge">${student.course}</div></div>
-                    <div class="card-text">${student.about}</div>
+                    <div class="card-header">
+                        <div class="card-title">${student.name}</div>
+                        <div class="card-badge-container">
+                            <div class="card-time">🕒 ${formattedDate}</div>
+                            <div class="card-badge">${student.course}</div>
+                        </div>
+                    </div>
+                    <div class="card-text">
+                        <b>Знает:</b> ${student.knows}<br>
+                        <b>Нужна помощь с:</b> ${student.needs}<br><br>
+                        ${student.about}
+                    </div>
                     <div class="card-actions">
                         ${deleteBtnHtml}
                         <button class="card-btn" onclick="openChat('${student.user_id}', '${student.name}')">Написать</button>
@@ -119,8 +160,8 @@
         }
 
         async function deleteStudent(id) {
-            if(confirm("Удалить анкету?")) {
-                await _supabase.from('students').delete().eq('id', id);
+            if(confirm("Удалить вашу анкету из общего поиска? (Сам аккаунт останется)")) {
+                await _supabase.from('students').update({ knows: '-', needs: '-' }).eq('id', id);
                 loadStudents();
             }
         }
@@ -155,20 +196,22 @@
             const partnersMap = new Map();
             const unreadSenders = new Set();
 
-            messages.forEach(m => {
-                if (m.partner === currentUser.id && m.is_read === false) {
-                    unreadSenders.add(m.sender);
-                }
-                if (m.sender === currentUser.id) {
-                    partnersMap.set(m.partner, m.partner_name || "Пользователь");
-                }
-                if (m.partner === currentUser.id) {
-                    partnersMap.set(m.sender, m.sender_name || "Пользователь");
-                }
-            });
+            if(messages) {
+                messages.forEach(m => {
+                    if (m.partner === currentUser.id && m.is_read === false) {
+                        unreadSenders.add(m.sender);
+                    }
+                    if (m.sender === currentUser.id) {
+                        partnersMap.set(m.partner, m.partner_name || "Пользователь");
+                    }
+                    if (m.partner === currentUser.id) {
+                        partnersMap.set(m.sender, m.sender_name || "Пользователь");
+                    }
+                });
+            }
 
             container.innerHTML = '';
-            if(partnersMap.size === 0) { container.innerHTML = 'Нет активных чатов'; return; }
+            if(partnersMap.size === 0) { container.innerHTML = '<div style="padding:10px;color:#64748b;">Нет активных чатов</div>'; return; }
 
             partnersMap.forEach((pName, pId) => {
                 const item = document.createElement('div');
@@ -193,7 +236,7 @@
 
         document.getElementById('searchInput').addEventListener('input', async function(e) {
             const text = e.target.value.toLowerCase();
-            const { data } = await _supabase.from('students').select('*');
+            const { data } = await _supabase.from('students').select('*').neq('knows', '-');
             const filtered = data.filter(s => 
                 `${s.knows} ${s.needs} ${s.name} ${s.about}`.toLowerCase().includes(text)
             );
