@@ -7,23 +7,46 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: #f1f5f9; display: flex; flex-direction: column; height: 100vh; }
-        header { background: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #e2e8f0; }
+        body { background-color: #f1f5f9; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        header { background: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #e2e8f0; z-index: 10; }
         .back-btn { text-decoration: none; color: #64748b; font-size: 1.2rem; font-weight: bold; }
         
+        /* Контейнер чата с относительным позиционированием для плавающей даты */
+        .chat-wrapper { position: relative; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* ПЛАВАЮЩИЙ БЛОК ДАТЫ (по центру сверху) */
+        .floating-date-badge {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(15, 23, 42, 0.6);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            backdrop-filter: blur(4px);
+            z-index: 5;
+            pointer-events: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: opacity 0.2s ease;
+            opacity: 0; /* Изначально скрыто, пока не пойдет скролл */
+        }
+
         .messages-container { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
         
-        /* Стили пузырька сообщения в стиле Telegram */
-        .msg { max-width: 75%; padding: 10px 14px 22px 14px; border-radius: 14px; font-size: 0.95rem; word-wrap: break-word; position: relative; line-height: 1.4; }
+        /* Сообщения */
+        .msg { max-width: 75%; padding: 8px 12px 20px 12px; border-radius: 12px; font-size: 0.95rem; word-wrap: break-word; position: relative; line-height: 1.4; }
         .msg.incoming { background-color: white; align-self: flex-start; border: 1px solid #e2e8f0; color: #1e293b; }
         .msg.outgoing { background-color: #4f46e5; align-self: flex-end; color: white; }
         
-        /* Время внутри сообщения (в правом нижнем углу) */
-        .msg-time { font-size: 0.7rem; position: absolute; bottom: 5px; right: 12px; }
+        /* Под сообщением теперь ТОЛЬКО время */
+        .msg-time { font-size: 0.7rem; position: absolute; bottom: 4px; right: 10px; }
         .msg.incoming .msg-time { color: #94a3b8; }
         .msg.outgoing .msg-time { color: rgba(255, 255, 255, 0.7); }
 
-        .input-area { background: white; padding: 15px; display: flex; gap: 12px; border-top: 1px solid #e2e8f0; }
+        .input-area { background: white; padding: 15px; display: flex; gap: 12px; border-top: 1px solid #e2e8f0; z-index: 10; }
         .input-area input { flex-grow: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 24px; outline: none; font-size: 1rem; }
         .input-area button { background-color: #4f46e5; color: white; border: none; padding: 12px 24px; border-radius: 24px; cursor: pointer; font-weight: bold; }
     </style>
@@ -35,7 +58,12 @@
         <div><b id="chatTitle">Диалог</b></div>
     </header>
 
-    <div class="messages-container" id="messagesContainer"></div>
+    <div class="chat-wrapper">
+        <!-- Плавающая плашка даты -->
+        <div class="floating-date-badge" id="floatingDateBadge">Сегодня</div>
+        
+        <div class="messages-container" id="messagesContainer"></div>
+    </div>
 
     <form class="input-area" id="chatForm">
         <input type="text" id="messageInput" placeholder="Напишите сообщение..." required autocomplete="off">
@@ -53,6 +81,7 @@
 
         let myId = null;
         let myName = "Вы"; 
+        let cachedMessages = []; // Сохраним сообщения для определения даты при скролле
 
         async function initChat() {
             const { data: { user } } = await _supabase.auth.getUser();
@@ -69,34 +98,52 @@
             document.getElementById('chatTitle').textContent = `Чат с: ${partnerName}`;
             
             await markAsRead();
-            loadMessages();
+            await loadMessages(true); // true означает прокрутку вниз при первом открытии
             
             setInterval(async () => {
                 await markAsRead();
-                loadMessages();
+                await loadMessages(false);
             }, 3000);
         }
 
-        // Функция форматирования времени сообщения под твои правила
-        function formatMessageTime(isoString) {
+        // Функция проверки: сегодня, вчера или точная дата (с учетом года)
+        function getSmartDateString(isoString) {
+            if (!isoString) return "";
+            const msgDate = new Date(isoString);
+            const today = new Date();
+            
+            const isToday = msgDate.toDateString() === today.toDateString();
+            
+            const yesterday = new Date();
+            yesterday.setDate(today.getDate() - 1);
+            const isYesterday = msgDate.toDateString() === yesterday.toDateString();
+
+            if (isToday) return "Сегодня";
+            if (isYesterday) return "Вчера";
+
+            // Месяцы прописью для красивого вывода
+            const months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+            const day = msgDate.getDate();
+            const monthName = months[msgDate.getMonth()];
+            const year = msgDate.getFullYear();
+            const currentYear = today.getFullYear();
+
+            // Если год не текущий, добавляем двухзначный год (например, "24 октября 25 г.")
+            if (year !== currentYear) {
+                const shortYear = String(year).slice(-2);
+                return `${day} ${monthName} ${shortYear} г.`;
+            }
+
+            return `${day} ${monthName}`;
+        }
+
+        // Функция для получения только времени (например, "17:03")
+        function getMessageTime(isoString) {
             if (!isoString) return "";
             const date = new Date(isoString);
-            const currentYear = new Date().getFullYear(); // 2026
-
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
             const hours = String(date.getHours()).padStart(2, '0');
             const minutes = String(date.getMinutes()).padStart(2, '0');
-
-            // Если год не текущий (например, 2025), выводим в формате ДД.ММ.ГГ в ЧЧ:ММ
-            if (year !== currentYear) {
-                const shortYear = String(year).slice(-2); // Двузначный год, например "25"
-                return `${day}.${month}.${shortYear} в ${hours}:${minutes}`;
-            } else {
-                // Если текущий год (2026), год не показываем
-                return `${day}.${month} в ${hours}:${minutes}`;
-            }
+            return `${hours}:${minutes}`;
         }
 
         async function markAsRead() {
@@ -109,11 +156,11 @@
                 .eq('is_read', false);
         }
 
-        async function loadMessages() {
+        async function loadMessages(scrollToBottomFlag = false) {
             const { data } = await _supabase.from('messages').select('*');
             if (!data) return;
 
-            const filtered = data.filter(m => 
+            cachedMessages = data.filter(m => 
                 (m.sender === myId && m.partner === partnerId) || 
                 (m.sender === partnerId && m.partner === myId)
             );
@@ -121,11 +168,14 @@
             const container = document.getElementById('messagesContainer');
             container.innerHTML = '';
             
-            filtered.forEach(msg => {
+            cachedMessages.forEach((msg, index) => {
                 const msgDiv = document.createElement('div');
                 msgDiv.className = msg.sender === myId ? 'msg outgoing' : 'msg incoming';
                 
-                const timeStr = formatMessageTime(msg.created_at);
+                // Сохраняем дату в атрибут для определения при скролле
+                msgDiv.setAttribute('data-date-string', getSmartDateString(msg.created_at));
+
+                const timeStr = getMessageTime(msg.created_at);
 
                 msgDiv.innerHTML = `
                     <div>${msg.text}</div>
@@ -133,29 +183,12 @@
                 `;
                 container.appendChild(msgDiv);
             });
-            container.scrollTop = container.scrollHeight;
+
+            if (scrollToBottomFlag) {
+                container.scrollTop = container.scrollHeight;
+            }
+            updateFloatingDate();
         }
 
-        document.getElementById('chatForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const input = document.getElementById('messageInput');
-            const text = input.value.trim();
-            if(!text) return;
-
-            input.value = '';
-            
-            await _supabase.from('messages').insert([{ 
-                sender: myId, 
-                sender_name: myName,
-                partner: partnerId, 
-                partner_name: partnerName,
-                text: text
-            }]);
-            
-            loadMessages();
-        });
-
-        initChat();
-    </script>
-</body>
-</html>
+        // Логика определения, какую дату показывать при скролле
+        const messagesContainer = document.getElementById('
