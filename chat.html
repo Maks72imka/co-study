@@ -11,10 +11,9 @@
         header { background: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #e2e8f0; z-index: 10; }
         .back-btn { text-decoration: none; color: #64748b; font-size: 1.2rem; font-weight: bold; }
         
-        /* Контейнер чата */
         .chat-wrapper { position: relative; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* ПЛАВАЮЩИЙ БЛОК ДАТЫ (по центру сверху) */
+        /* Плавающая плашка даты */
         .floating-date-badge {
             position: absolute;
             top: 12px;
@@ -34,15 +33,24 @@
             opacity: 0;
         }
 
-        .messages-container { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .messages-container { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         
-        /* Сообщения */
-        .msg { max-width: 75%; padding: 8px 12px 20px 12px; border-radius: 12px; font-size: 0.95rem; word-wrap: break-word; position: relative; line-height: 1.4; }
+        /* Исправленные стили сообщений: добавлена min-width, чтобы короткие слова не сжимались в полоски */
+        .msg { 
+            max-width: 75%; 
+            min-width: 90px; /* Минимальная ширина пузырька, чтобы время и короткий текст помещались идеально */
+            padding: 8px 14px 22px 14px; 
+            border-radius: 14px; 
+            font-size: 0.95rem; 
+            word-wrap: break-word; 
+            position: relative; 
+            line-height: 1.4; 
+        }
         .msg.incoming { background-color: white; align-self: flex-start; border: 1px solid #e2e8f0; color: #1e293b; }
         .msg.outgoing { background-color: #4f46e5; align-self: flex-end; color: white; }
         
-        /* Под сообщением только время */
-        .msg-time { font-size: 0.7rem; position: absolute; bottom: 4px; right: 10px; }
+        /* Время под сообщением */
+        .msg-time { font-size: 0.7rem; position: absolute; bottom: 4px; right: 12px; }
         .msg.incoming .msg-time { color: #94a3b8; }
         .msg.outgoing .msg-time { color: rgba(255, 255, 255, 0.75); }
 
@@ -107,7 +115,6 @@
             }
         }
 
-        // Безопасное определение даты
         function getSmartDateString(isoString) {
             if (!isoString) return "Сегодня";
             try {
@@ -141,7 +148,6 @@
             }
         }
 
-        // Безопасное получение времени
         function getMessageTime(isoString) {
             if (!isoString) {
                 const now = new Date();
@@ -168,7 +174,7 @@
                     .eq('partner', myId)
                     .eq('is_read', false);
             } catch (e) {
-                console.error(" Ошибка обновления статуса прочтения:", e);
+                console.error("Ошибка обновления статуса прочтения:", e);
             }
         }
 
@@ -210,7 +216,6 @@
             }
         }
 
-        // Логика плавающей даты
         const messagesContainer = document.getElementById('messagesContainer');
         const floatingBadge = document.getElementById('floatingDateBadge');
         let scrollTimeout;
